@@ -1,6 +1,6 @@
-# [CSTBox](http://cstbox.cstb.fr)
+# CSTBox core
 
-This repository contains the code for the core part of the CSTBox framework.
+This repository contains the code for the core part of the [CSTBox framework](http://cstbox.cstb.fr).
 
 CSTBox is a soft real-time toolkit for building component-oriented embedded systems. 
 It has been created for developping autonomous applications based on heterogeneous 
