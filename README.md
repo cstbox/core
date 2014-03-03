@@ -6,7 +6,7 @@ CSTBox is a soft real-time toolkit for building component-oriented embedded syst
 It has been created for developping autonomous applications based on heterogeneous 
 sensors and actuators networks. It is not just yet another data logger, but provides
 the required infrastructure to add your own specific in-situ processing, and obtain
-a fully autonomous system, not required connection to a server for remote processing.
+a fully autonomous system, not requiring a connection to a server for remote processing.
 
 It has been created and is maintained by [Eric Pascual](https://github.com/ericpascual) 
 and [Daniel Cheung](https://github.com/daniel-cheung).
