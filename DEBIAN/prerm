@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#set -e
+
+# stop running CSTBox services, if any 
+
+service cstbox stop
+
+# unregister CSTBox services from init process
+
+echo "Removing CSTBox services from system startup..."
+update-rc.d -f cstbox remove > /dev/null

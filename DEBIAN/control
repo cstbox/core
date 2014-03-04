@@ -1,0 +1,16 @@
+Package: cstbox-core
+Version: 1.0.0
+Section: base
+Priority: optional
+Architecture: all
+Depends: python (>=2.7), python (<<3), python-dbus, python-gobject, dbus-x11, cstbox-support
+Suggests: avahi-utils,openntpd
+Maintainer: Eric Pascual <eric.pascual@cstb.fr>
+Description: CSTBox runtime core part
+ This package installs all the core sub-systems of the CSTBox
+ runtime environment. This includes :
+ - D-Bus private session bus
+ - CSTBox Events Manager
+ - CSTBox Events Database
+ - CSTBox Configuration Broker
+ - CSTBox Avahi service publication (if Avahi available)

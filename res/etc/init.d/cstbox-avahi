@@ -1,0 +1,49 @@
+#! /bin/bash
+### BEGIN INIT INFO
+# Provides:          cstbox-avahi
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: CSTBox service publication with Avahi 
+# Description:       The service is publish with a service type set to 
+#                    "_cstbox._tcp" and the hotsname is used for the 
+#                    service name. This script must be executed only after
+#                    all other CSTBox services are started.
+### END INIT INFO
+
+# This file is part of CSTBox.
+#
+# CSTBox is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# CSTBox is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with CSTBox.  If not, see <http://www.gnu.org/licenses/>.
+
+# Author: Eric Pascual <eric.pascual@cstb.fr>
+
+# Do NOT "set -e"
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="CSTBox Avahi service publication"
+NAME=cstbox-avahi
+INIT_SEQ=99
+CORE_SVC=1
+IFS=' ' read -a paths <<< $(whereis -b avahi-publish-service | cut -d: -f2)
+DAEMON=${paths[0]}
+
+SYSTEM_ID=$(grep "system_id\s*=" /etc/cstbox/cstbox.cfg | cut -d= -f2 | tr -d ' ')
+[ -n "$SYSTEM_ID" ] || SYSTEM_ID=$(hostname) 
+DAEMON_ARGS="$SYSTEM_ID _cstbox._tcp 8080"
+
+INIT_VERBOSE=yes
+
+. /opt/cstbox/lib/init/init-functions

@@ -1,0 +1,5 @@
+CSTBOX_HOME="/opt/cstbox"
+CSTBOX_BIN="$CSTBOX_HOME/bin"
+CSTBOX_APPDATA="/var/run/cstbox/appdata"
+
+PYTHONPATH="$CSTBOX_HOME/lib/python"

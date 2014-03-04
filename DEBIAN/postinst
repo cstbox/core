@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set -e
+
+CSTBOX_HOME="/opt/cstbox"
+PYCSTBOX_HOME="$CSTBOX_HOME/lib/python/pycstbox"
+
+AUTO_START=${AUTO_START:=1}
+
+echo "Adding static mapping of serial ports..."
+
+UDEV_RULES_TARGET="/etc/udev/rules.d/70-persistent-usb.rules"
+UDEV_RULES_LIB="$CSTBOX_HOME/lib/udev-rules.d"
+UDEV_RULES_EMPTY="$UDEV_RULES_LIB/empty.rules"
+
+DMIDECODE=$(whereis -b dmidecode | cut -d: -f2 | tr -d ' ')
+
+if [ -n "$DMIDECODE" ]; then
+    SYSTEM_MANUFACTURER=$($DMIDECODE -s system-manufacturer)
+    SYSTEM_PRODUCT_NAME=$($DMIDECODE -s system-product-name | tr ' ' '_')
+    echo "  looking for Manufacturer=$SYSTEM_MANUFACTURER and Product=$SYSTEM_PRODUCT_NAME in rules database..."
+
+    UDEV_RULES_SRC=$(echo "$UDEV_RULES_LIB/$SYSTEM_MANUFACTURER-$SYSTEM_PRODUCT_NAME.rules" | tr ' ' '_')
+    if [ -r $UDEV_RULES_SRC ]; then
+        cp $UDEV_RULES_SRC $UDEV_RULES_TARGET
+        echo "  --> rules found and installed as $UDEV_RULES_TARGET"
+    else
+        cp $UDEV_RULES_EMPTY $UDEV_RULES_TARGET
+        echo "  *** no match"
+        echo " => you'll have to complete $UDEV_RULES_TARGET by hand"
+    fi
+
+else
+    echo "*** dmidecode not installed ***"
+    echo " => cannot identify which kind of machine is used for the box"
+    echo " => you'll have to complete $UDEV_RULES_TARGET by hand"
+    cp $UDEV_RULES_EMPTY $UDEV_RULES_TARGET
+fi
+
+#replaced by setting PYTHONPATH in init scripts
+#echo "Adding CSTBox Python framework to Python search path..."
+#ln -sf $PYCSTBOX_HOME /usr/local/lib/python2.7/dist-packages/
+
+# Add CSTBox meta service to the init process
+
+# Note that since individual services are in the init.d directory, it will
+# still be possible to start/stop them individually, but they are not included
+# explicitely in the startup sequence.
+# This is done this way so that services added by extension packages are 
+# automatically integrated in the start/stop process, thanks to the automatic 
+# discovery executed each time the "service cstbox start/stop" command is executed.
+
+echo "Adding CSTBox services in system init sequence..."
+update-rc.d cstbox defaults > /dev/null
+
+# Start it now, unless asked otherwise
+if [ $AUTO_START -ne 0 ] ; then
+    service cstbox start
+else
+    echo "[W] service auto-start has been disabled. You'll have to issue 'service cstbox start' later as root."
+fi
+
+# update search path so that CSTBox commands are available from now
+. /etc/profile.d/cstbox.sh

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+case "$1" in
+    remove|purge)
+        rm -rf /opt/cstbox
+        rm -f /etc/init.d/cstbox-*
+        rm -rf /etc/cron.d/cstbox
+
+        if [ "$1" = "purge" ] ; then
+            rm -rf /etc/cstbox /var/log/cstbox /var/db/cstbox
+        fi
+        ;;
+esac
+

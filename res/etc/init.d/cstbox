@@ -1,0 +1,155 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          cstbox
+# Required-Start:    $remote_fs $syslog 
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: CSTBox subsystem meta-service
+# Description:       This script takes care of starting and stopping 
+#                    all installed CSTBox services in the proper sequence
+### END INIT INFO
+
+# This file is part of CSTBox.
+#
+# CSTBox is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# CSTBox is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with CSTBox.  If not, see <http://www.gnu.org/licenses/>.
+
+# Author: Eric Pascual <eric.pascual@cstb.fr>
+
+DESC="CSTBox subsystem meta-service"
+
+TMP_SVC_LIST="/tmp/cstb_svc_list"
+TMP_DUMMY="/tmp/dummy"
+APPLAYER_OPT=$2
+LOG_DIR_PATH="/var/log/cstbox"
+SYSLOG="logger -t cstbox"
+
+. /lib/lsb/init-functions
+. /etc/cstbox/setenv
+
+init() {
+    # build the installed services list, tagged with their respective 
+    # sequence number and store it in a temp file for use by the rest
+    # of the script
+    rm -f $TMP_SVC_LIST
+
+    # depending on --applayer option being used or not, either take all init
+    # scripts in account, or only those not tagged as being part of the core layer
+    if [ "$APPLAYER_OPT" == "--applayer" ] ; then
+        # Hack of the day: we add a dummy file to the grep result, so that we
+        # have more than one file to be processed by next grep. 
+        # If not done, grep will not include the file name in the result when  
+        # processing only one file, which will break the rest of the processing.
+        touch $TMP_DUMMY
+        init_list="$(grep -L -e '^CORE_SVC=1' /etc/init.d/cstbox-*) $TMP_DUMMY"
+    else
+        init_list='/etc/init.d/cstbox-*'
+    fi
+
+    grep -e '^\s*INIT_SEQ=' $init_list | while IFS=: read script stmt ; do
+        svc=$(basename $script)
+        flds=(${stmt//=/ })
+        init_seq=${flds[1]}
+        echo $init_seq $svc >> $TMP_SVC_LIST
+    done  
+}
+
+cleanup() {
+    rm -f $TMP_SVC_LIST $TMP_DUMMY
+}
+
+do_start() {
+    $SYSLOG "start sequence initiated"
+
+    # Create application volatile runtime data directory in case not yet here
+    mkdir -p /var/run/cstbox/appdata
+
+    # Same for log files dedicated directory
+    [ -d $LOG_DIR_PATH ] || mkdir -p $LOG_DIR_PATH
+
+    # Sort the services list by increasing sequence number, and
+    # start each service in turn.
+    # Stop at once in case of error (TODO: should be do some kind of rollback ?)
+    sort $TMP_SVC_LIST | while read init_seq svc ; do
+        $SYSLOG "starting $svc"
+        service $svc start
+        rc=$?
+        if [ $rc -ne 0 ] ; then
+            $SYSLOG "$svc start failed with rc=$rc"
+            return $rc
+        fi
+        $SYSLOG "$svc started"
+    done
+
+    $SYSLOG "start sequence complete"
+}
+
+do_stop() {
+    $SYSLOG "stop sequence initiated"
+
+    # Sort the services list by decreasing sequence number, and
+    # stop each service in turn. Go until the end even if some 
+    # step fails.
+    sort -r $TMP_SVC_LIST | while read init_seq svc ; do
+        service $svc stop
+        $SYSLOG "$svc stopped"
+    done
+    # Remove application runtime data
+    rm -f $CSTBOX_APPDATA/*
+
+    $SYSLOG "stop sequence complete"
+}
+
+do_status() {
+    $CSTBOX_BIN/cbx-status.sh
+}
+
+init
+rc=$?
+
+case "$1" in
+    start)
+        do_start
+        rc=$?
+        ;;
+    stop)
+        do_stop
+        rc=$?
+        ;;
+    status)
+        do_status
+        ;;
+    restart|force-reload)
+        do_stop
+        case "$?" in
+            0|1)
+            # wait a bit before starting to avoid log messages being out of sequence
+            sleep 1
+            do_start
+            ;;
+        *)
+            # Failed to stop
+            ;;
+        esac
+        ;;
+    *)
+        echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+        exit 3
+        ;;
+esac
+
+cleanup
+
+exit $rc

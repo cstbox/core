@@ -1,0 +1,11 @@
+# Empty udev rules for static USB ports mapping
+#
+# Add the appropriate entries, using the following template :
+# SUBSYSTEMS=="usb", KERNELS=="...", SYMLINK+="ttyUSBPORT..."
+#
+# KERNELS value is obtained from in dmesg output lines such as :
+# usb 3-2: FTDI USB Serial Device converter now attached to ttyUSB0
+#     ^^^
+#
+# SYMBLINK can be anything you want, but usually it is better to
+# follow a pattern such as the one indicated (ex: ttyUSBPORT0,...)
