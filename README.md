@@ -11,7 +11,7 @@ a fully autonomous system, not requiring a connection to a server for remote pro
 It has been created and is maintained by [Eric Pascual](https://github.com/ericpascual) 
 and [Daniel Cheung](https://github.com/daniel-cheung).
 
-To get started, checkout [the project web site](http://cstbox.github.io)!
+To get started, please checkout [the project web site](http://cstbox.github.io)!
 
 ## Runtime dependencies
 
