@@ -11,6 +11,5 @@ Description: CSTBox runtime core part
  runtime environment. This includes :
  - D-Bus private session bus
  - CSTBox Events Manager
- - CSTBox Events Database
  - CSTBox Configuration Broker
  - CSTBox Avahi service publication (if Avahi available)
