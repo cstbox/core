@@ -1,15 +1,14 @@
+# CSTBox framework
+#
 # Makefile for building the Debian distribution package containing the
 # core part of the CSTBox runtime.
-
+#
 # author = Eric PASCUAL - CSTB (eric.pascual@cstb.fr)
-# copyright = Copyright (c) 2013 CSTB
-# vcsid = $Id$
-# version = 1.0.0
 
 # name of the CSTBox module
 MODULE_NAME=core
 
-include $(CSTBOX_DEVEL_HOME)/devel/makefile-dist.mk
+include $(CSTBOX_DEVEL_HOME)/lib/makefile-dist.mk
 
 UDEV_RULES_DIR=$(CSTBOX_INSTALL_DIR)/lib/udev-rules.d
 
