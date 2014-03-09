@@ -37,10 +37,6 @@ else
     cp $UDEV_RULES_EMPTY $UDEV_RULES_TARGET
 fi
 
-#replaced by setting PYTHONPATH in init scripts
-#echo "Adding CSTBox Python framework to Python search path..."
-#ln -sf $PYCSTBOX_HOME /usr/local/lib/python2.7/dist-packages/
-
 # Add CSTBox meta service to the init process
 
 # Note that since individual services are in the init.d directory, it will
