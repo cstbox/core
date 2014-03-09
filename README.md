@@ -13,10 +13,31 @@ and [Daniel Cheung](https://github.com/daniel-cheung).
 
 To get started, please checkout [the project web site](http://cstbox.github.io)!
 
-## Runtime dependencies
+## Installation
 
-CSTBox relies on D-Bus for inter-components communication. On Debian based target systems,
-required packages can be installed by :
+Current works are made in Debian based distributions context. We currently use a bare Ubuntu Server
+12.04 LTS for our deployments on i386 targets, installing nothing else but the ssh server. Raspberry
+deployements use a Raspbian which X server is disabled.
 
-    sudo apt-get install dbus-x11 python-gobject python-gobject-2
+### With `apt-get`
 
+**WARNING** - PPA server is not yet available
+
+Add the CSTBox PPA to the sources list once for all :
+
+    deb http://to.be.defined.url/ ./
+
+You will then be able to install the CSTBox core using : 
+
+    $ sudo apt-get install cstbox-core
+    
+Required dependencies will be installed automatically if needed. 
+
+Pay attention to the suggested packages. Most of the time it can be usefull to add them.
+
+### With `dpkg`
+
+Dependencies must be installed by hand before the CSTBox package :
+
+    $ sudo apt-get install dbus-x11 python-gobject python-gobject-2
+    $ sudo dpkg -i cstbox-core_<version>_all.deb
