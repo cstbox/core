@@ -18,5 +18,5 @@ To get started, please checkout [the project web site](http://cstbox.github.io)!
 CSTBox relies on D-Bus for inter-components communication. On Debian based target systems,
 required packages can be installed by :
 
-    sudo apt-get install dbus-x11 python-gobject
+    sudo apt-get install dbus-x11 python-gobject python-gobject-2
 
