@@ -3,7 +3,7 @@ Version: 1.0.0
 Section: base
 Priority: optional
 Architecture: all
-Depends: python (>=2.7), python (<<3), python-dbus, python-gobject, dbus-x11, cstbox-support
+Depends: python (>=2.7), python (<<3), python-dbus, python-gobject, dbus-x11
 Suggests: avahi-utils,openntpd
 Maintainer: Eric Pascual <eric.pascual@cstb.fr>
 Description: CSTBox runtime core part
