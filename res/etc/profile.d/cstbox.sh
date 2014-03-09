@@ -1,2 +1,9 @@
 #!/bin/bash
-export PATH="/opt/cstbox/bin:$PATH"
+
+CSTBOX_BIN=/opt/cstbox/bin
+
+export PATH="$CSTBOX_BIN:$PATH"
+echo "[CSTBox] $CSTBOX_BIN added to the search path."
+
+. /etc/cstbox/setenv
+

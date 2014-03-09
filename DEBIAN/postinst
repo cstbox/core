@@ -55,6 +55,3 @@ if [ $AUTO_START -ne 0 ] ; then
 else
     echo "[W] service auto-start has been disabled. You'll have to issue 'service cstbox start' later as root."
 fi
-
-# update search path so that CSTBox commands are available from now
-. /etc/profile.d/cstbox.sh
