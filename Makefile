@@ -11,6 +11,7 @@ MODULE_NAME=core
 include $(CSTBOX_DEVEL_HOME)/lib/makefile-dist.mk
 
 UDEV_RULES_DIR=$(CSTBOX_INSTALL_DIR)/lib/udev-rules.d
+DPKG_LIB_DIR=$(CSTBOX_INSTALL_DIR)/lib/dpkg
 
 make_extra_dirs:
 # runtime data storage
@@ -22,6 +23,9 @@ make_extra_dirs:
 	
 # udev rules files
 	mkdir -p $(UDEV_RULES_DIR)
+
+# dpkg related lib
+	mkdir -p $(DPKG_LIB_DIR)
 
 
 copy_files: \
@@ -43,4 +47,7 @@ copy_files: \
 	    --filter "-s_*/.*" \
 	    $(LIB_FROM)/udev.d/ $(BUILD_DIR)/$(UDEV_RULES_DIR)
 
+	$(RSYNC) \
+	    --filter "-s_*/.*" \
+	    $(LIB_FROM)/dpkg/ $(BUILD_DIR)/$(DPKG_LIB_DIR)
 

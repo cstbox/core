@@ -1,5 +1,7 @@
 export CSTBOX_HOME="/opt/cstbox"
 export CSTBOX_BIN="$CSTBOX_HOME/bin"
-export CSTBOX_APPDATA="/var/run/cstbox/appdata"
+export CSTBOX_VAR_RUN="/var/run/cstbox"
+export CSTBOX_APPDATA="$CSTBOX_VAR_RUN/appdata"
+export CSTBOX_LIB_DPKG="$CSTBOX_HOME/lib/dpkg"
 
 export PYTHONPATH="$CSTBOX_HOME/lib/python"

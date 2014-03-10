@@ -1,0 +1,14 @@
+stop_service() {
+    svc=$1
+    [ -n "$svc" ] || return
+
+    if [ -f $CSTBOX_VAR_RUN/$svc.pid ] ; then
+        service $svc stop
+    fi
+}
+
+cleanup_pyc() {
+    grep -e "\.py$" /var/lib/dpkg/info/${DPKG_MAINTSCRIPT_PACKAGE}.list | sed 's/$/c/' | while read fpath ; do
+        rm -f $fpath
+    done
+}
