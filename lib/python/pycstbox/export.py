@@ -58,6 +58,12 @@ class EventsExportJob(Loggable):
     ERR_PREPARE = 100
     ERR_EXPORT_EVENTS = 200
     ERR_SEND = 300
+    ERR_NAMES = {
+        ERR_NONE: 'ERR_NONE',
+        ERR_PREPARE: 'ERR_PREPARE',
+        ERR_EXPORT_EVENTS: 'ERR_EXPORT_EVENTS',
+        ERR_SEND: 'ERR_SEND'
+    }
 
     def __init__(self, jobname, jobid, parms, logger=None):
         """
@@ -82,6 +88,11 @@ class EventsExportJob(Loggable):
 
         self.log_info('- job %s:%s created :', jobname, jobid)
         self.log_info('  + parameters : %s', self._format_parms())
+
+
+    @classmethod
+    def error_text(cls, code):
+        return cls.ERR_NAMES[code]
 
     def _format_parms(self):
         """ Returns a displayable version of the parameters, used for logging
@@ -109,7 +120,7 @@ class EventsExportJob(Loggable):
 
         Can be overridden if an other kind of id is needed.
         """
-        return ts.strftime('%y%m%d%H%M%S')
+        return ts.strftime('%y%m%d%H%M%S%f')
 
     def run(self, max_try=1, retry_delay=10): #pylint: disable=R0912
         """ Job main line process.
