@@ -31,7 +31,7 @@ def hal_device(device_type, coordinator_type):
 
     - it adds the _OUTPUTS_TO_EVENTS_MAPPING attribute to the class, pulling its content from the
     metadata defined for the related device and stored in `devcfg.d` sub-tree
-    - it registers the class for use at devices instanciation time while loading the network
+    - it registers the class for use at devices instantiation time while loading the network
     configuration
 
     :param str device_type: the associated device type, as used in the network configuration
@@ -44,13 +44,14 @@ def hal_device(device_type, coordinator_type):
 
         meta = Metadata.device(coordinator_type + ':' + device_type)
         outputs = meta['pdefs']['outputs']
-        # adds the mapping table as a dynamically defined attribute containing the
-        # corresponding dictionary. We use properties of the output which name is
-        # not a "special" one, ie bracketed by double underscores
+        # adds the mapping table as a dynamically defined attribute containing a
+        # dictionary describing the events associated to each device output. For the moment,
+        # only the (semantic) type of the variable and its units are collected.
         setattr(cls, '_OUTPUTS_TO_EVENTS_MAPPING',
                 dict((
                     (k, EventDataDef(v['__vartype__'], v.get('__varunits__', None)))
                     for k, v in outputs.iteritems()
+                    # filter out special entries of the outputs dictionary in the configuration data
                     if not k.startswith('__')
                 ))
         )
