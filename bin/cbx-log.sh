@@ -19,7 +19,7 @@ LOG_DIR="/var/log/cstbox"
 
 if [ -z "$PAGER" ] ; then
     if (which most > /dev/null); then
-        PAGER='most'
+        PAGER='most +999999'
     else
         PAGER='more'
     fi
