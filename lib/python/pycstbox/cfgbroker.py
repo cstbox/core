@@ -167,14 +167,59 @@ class BrokerObject(dbus.service.Object):
 
     @dbus.service.method(SERVICE_INTERFACE, out_signature='s')
     def get_full_configuration(self):
-        """ Return the full configuration data as its JSON representation.
+        """ Returns the full configuration data as its JSON representation.
         """
-
         if self._logger.isEnabledFor(logging.DEBUG):
             self._logger.debug("get_full_configuration called")
 
         return self._cfg.as_json()
 
+    @dbus.service.method(SERVICE_INTERFACE, out_signature='as')
+    def get_coordinator_types(self):
+        """ Returns the list of registered coordinator types
+
+        :returns: an array of coordinator type (str)
+        """
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug("get_coordinator_types called")
+
+        return devcfg.Metadata.coordinator_types()
+
+    @dbus.service.method(SERVICE_INTERFACE, in_signature='s', out_signature='s')
+    def get_coordinator_metadata(self, c_type):
+        """ Returns the metadata for a given coordinator type.
+
+         :param str c_type: coordinator type
+         :returns str: JSON representation of the coordinator metadata
+        """
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug("get_coordinator_metadata called with c_type=%s" % c_type)
+
+        return json.dumps(devcfg.Metadata.coordinator(c_type))
+
+    @dbus.service.method(SERVICE_INTERFACE, in_signature='s', out_signature='as')
+    def get_device_types(self, c_type):
+        """ Returns the list of device types for a given coordinator type.
+
+         :param str c_type: coordinator type
+         :returns: an array of device types
+        """
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug("get_device_types called with c_type=%s" % c_type)
+
+        return devcfg.Metadata.device_types(c_type)
+
+    @dbus.service.method(SERVICE_INTERFACE, in_signature='s', out_signature='s')
+    def get_device_metadata(self, fqdt):
+        """ Returns the metadata for a given device fully qualified type.
+
+         :param str fqdt: device fully qualified type (<c_type>:<d_type>)
+         :returns: JSON representation of the device metadata
+        """
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug("get_device_types called with fqdt=%s" % fqdt)
+
+        return json.dumps(devcfg.Metadata.device())
 
     @dbus.service.method(SERVICE_INTERFACE, in_signature='ss')
     def notify_configuration_change(self, chgtype=CFGCHG_GLOBAL, resid=None):
