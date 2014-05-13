@@ -42,11 +42,11 @@ class HalDevice(object):    #pylint: disable=R0922
 
     This base class includes the generic mechanism which produces CSTBox events based on
     data produce by the equipment outputs (see :py:meth:`create_events`), and can be used
-    as is for modeling asynchrous equipments which produce data on their own (ie without being
+    as is for modeling asynchronous equipments which produce data on their own (ie without being
     polled).
 
     Polled devices are modeled by the :py:class:`PolledDevice` class, which provides the
-    fundation for managing the dialog with the physical equipement in order to get its outputs.
+    foundation for managing the dialog with the physical equipment in order to get its outputs.
     """
     def __init__(self, coord, cfg):
         """
