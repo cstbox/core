@@ -219,7 +219,7 @@ class BrokerObject(dbus.service.Object):
         if self._logger.isEnabledFor(logging.DEBUG):
             self._logger.debug("get_device_types called with fqdt=%s" % fqdt)
 
-        return json.dumps(devcfg.Metadata.device())
+        return json.dumps(devcfg.Metadata.device(fqdt))
 
     @dbus.service.method(SERVICE_INTERFACE, in_signature='ss')
     def notify_configuration_change(self, chgtype=CFGCHG_GLOBAL, resid=None):
