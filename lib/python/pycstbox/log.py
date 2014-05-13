@@ -93,7 +93,7 @@ class Loggable(object):
         #
         # This avoids creating a lot of code like this :
         # def log_info(self, *args, **kwargs):
-        #   self._logger.info(*args, **kwargs)
+        #   self.logger.info(*args, **kwargs)
         #
         # All other methods are accessible by using the logger property which
         # gives access to the embedded logger instance.
