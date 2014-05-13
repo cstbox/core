@@ -5,7 +5,7 @@ set -e
 CSTBOX_HOME="/opt/cstbox"
 PYCSTBOX_HOME="$CSTBOX_HOME/lib/python/pycstbox"
 
-AUTO_START=${AUTO_START:=1}
+AUTO_START=${AUTO_START:=0}
 
 echo "Adding static mapping of serial ports..."
 
@@ -49,9 +49,10 @@ fi
 echo "Adding CSTBox services in system init sequence..."
 update-rc.d cstbox defaults > /dev/null
 
-# Start it now, unless asked otherwise
-if [ $AUTO_START -ne 0 ] ; then
+# Start it now if requested
+echo "Auto start option set to : $AUTO_START"
+if [ "$AUTO_START" == "1" ] ; then
     service cstbox start
 else
-    echo "[W] service auto-start has been disabled. You'll have to issue 'service cstbox start' later as root."
+    echo "[W] enter 'service cstbox start' as root to start CSTBox framework."
 fi
