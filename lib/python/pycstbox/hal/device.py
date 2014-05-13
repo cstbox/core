@@ -114,7 +114,7 @@ class HalDevice(object):    #pylint: disable=R0922
             a tuple containing the values produced by the output(s) of the
             device. Output values set to None are silently ignored
 
-        :returns list: a (possibily empty) list of events to be emitted
+        :returns list: a (possibly empty) list of events to be emitted
         """
         events = []
 
