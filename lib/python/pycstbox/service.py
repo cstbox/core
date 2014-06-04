@@ -119,7 +119,7 @@ class ServiceContainer(Loggable):
         """ Local override of log_setLevel fo handing the propagation of the
         level setting to the child service objects."""
         Loggable.log_setLevel(self, level)
-        for so in [o for o in self._objects if isinstance(o, Loggable)]:
+        for so in [o for o in self._objects if isinstance(o, Loggable) and o is not self]:
             so.log_setLevel(level)
 
     def add(self, svc_object, path):
@@ -255,6 +255,7 @@ class _FrameworkServiceObject(dbus.service.Object):
 
 
 class SimpleService(ServiceContainer, dbus.service.Object):
+    #FIXME: fix recursions problems
     """ This class is just a helper for implementation of a service composed of
     a single object.
 
@@ -263,6 +264,9 @@ class SimpleService(ServiceContainer, dbus.service.Object):
     is set to '/service'.
 
     It must be sub-classed to implement the required methods and/or signals.
+
+    **IMPORTANT** don't use this for the moment, it is a bit buggy
+
     """
     def __init__(self, name, conn=None, path='/service'):
         """
