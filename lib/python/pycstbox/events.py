@@ -50,10 +50,14 @@ what variables represent. For instance, a temperature is always a temperature,
 no matter if it is the temperature of a given room returned by a sensor, or the
 set point for a temperature regulator.
 
-Variable names must be unique within the same type, and only the association
-(type, name) must be unique. For instance, on can have two variables named
-"livingroom", one defined with the "temperature" type, and the other with the
-"movement" one.
+Although not a good practice, variable names must be unique within the same type,
+and only the association (type, name) must be unique. For instance, on can have
+two variables named "living_room", one defined with the "temperature" type, and
+the other with the "movement" one.
+
+**BEWARE:** since this can lead to unclear configurations, this behaviour is subject
+to be modified in the future to adopt the approach commonly used for programming
+ languages (ie identifiers uniqueness)
 
 At implementation level, events are conveniently manipulated as tuples, which
 components are the ones listed above. Python tuples are an efficient and
@@ -67,9 +71,6 @@ respected in the tuple.
 """
 
 __author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-__copyright__ = 'Copyright (c) 2013 CSTB'
-__vcs_id__ = '$Id$'
-__version__ = '1.0.0'
 
 from collections import namedtuple
 
