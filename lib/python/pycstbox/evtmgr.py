@@ -121,7 +121,7 @@ class EventManagerObject(dbus.service.Object, Loggable):
     def onCSTBoxEvent(self, timestamp, var_type, var_name, data):
         """ CSTBoxEvent broadcasting DBus signal
 
-        :param uunsigned64 timestamp:
+        :param unsigned64 timestamp:
             the event timestamp, in milliseconds since January 1st, 1970
 
         See :py:meth:`emitEvent` documentation for other parameters.
