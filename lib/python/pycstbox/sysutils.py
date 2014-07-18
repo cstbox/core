@@ -19,14 +19,12 @@
 """ CSTBox system level utilities. """
 
 __author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-__copyright__ = 'Copyright (c) 2013 CSTB'
-__vcs_id__ = '$Id$'
-__version__ = '1.0.0'
 
 import os
 import re
 import subprocess
 from collections import namedtuple
+import datetime
 
 import pycstbox.log as log
 _logger = log.getLogger('sysutils')
@@ -44,6 +42,7 @@ def str_2_bool(s):
     return s.lower() in ('true', 't', 'yes', 'y', '1')
 
 _period_re = re.compile(r'^([\d]+)([smh]?)$')
+_tod_re = re.compile(r'^(?P<hours>[\d]+):(?P<minutes>[\d]+)(:(?P<seconds>[\d]+))?')
 
 
 def parse_period(s):
@@ -83,6 +82,54 @@ def parse_period(s):
 
     else:
         raise ValueError('invalid period value (%s)' % s)
+
+
+def parse_time_of_day(s):
+    """ Parses a string representing a (possibly abbreviated) time of day and returns the corresponding
+    `datetime.time` instance.
+
+    Parsed string must be expressed in 24 hours format, and must contains at least hours and minutes. If not
+    present, seconds are defaulted to 0. Fields are separated by colons.
+
+    :param str s: the string to be parsed
+    :return: the corresponding time of day
+    :rtype: datetime.time
+    :raise: ValueError if the parsed string is not a valid time of day
+    """
+    if not s or s.isspace():
+        raise ValueError('empty or blank argument')
+
+    m = _tod_re.match(s + ":00")
+    if m:
+        fields = [int(m.group(g)) for g in ('hours', 'minutes', 'seconds')]
+        return datetime.time(*fields)
+
+    else:
+        raise ValueError('invalid time of day (%s)' % s)
+
+
+def time_in_span(t, start, end):
+    """ Returns if a given time of day is in the span defined by two bounds.
+
+    The following rule are applied, depending on t0 is before or after t1 :
+    * t0 < t1 : returns True if t0 <= t <= t1
+    * t0 > t1 : returns True if t >+ t0 or t <= t1
+
+    The second case corresponds to an overnight time span.
+
+    :param datetime.time t: tested time of day
+    :param datetime.time start: span starting time of day
+    :param datetime.time end: span ending time of day
+    :return: True if t in the time span
+    :raise ValueError: if any of the parameters is invalid of of t0 == t1
+    """
+    if start == end:
+        raise ValueError("bounds cannot be equal")
+    elif start < end:
+        return start <= t <= end
+    else:
+        return t >= start or t <= end
+
 
 ServiceInformation = namedtuple('ServiceInformation', 'descr core running')
 """ Service descriptor namedtuple.
@@ -321,6 +368,7 @@ class ServicesManager(object):
             stderr=subprocess.PIPE
         )
 
+
 def get_services_manager():
     """ Poor man's singleton implementation, since it does not forbid to
     use ServicesManager() in your code.
@@ -337,6 +385,21 @@ def get_services_manager():
 
 
 class ServicesManagerError(Exception):
-    """ Specializec error for CSTBox services management.
+    """ Specialized error for CSTBox services management.
     """
     pass
+
+
+def checked_dir(path):
+    """ Internal helper for checking if the given path exists and is a
+    directory.
+
+    If not, raises a ValueError exception. If yes, return the corresponding
+    absolute path.
+    """
+    if not os.path.exists(path):
+        raise ValueError("path not found : %s" % path)
+    if not os.path.isdir(path):
+        raise ValueError("path is not a directory : %s" % path)
+    return path
+
