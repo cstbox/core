@@ -159,3 +159,8 @@ def loglevel_from_args(args):
     :param args: the CLI arguments, as parser by an argument parser
     """
     return getattr(logging, args.loglevel.upper())
+
+
+# default module initialization at import time
+setup_logging()
+
