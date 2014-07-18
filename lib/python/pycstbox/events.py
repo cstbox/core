@@ -73,21 +73,62 @@ respected in the tuple.
 __author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
 
 from collections import namedtuple
+import datetime
 
-BasicEvent = namedtuple(
-    'BasicEvent',
-    'var_type var_name data'
-)
 
-TimedEvent = namedtuple(
-    'TimedEvent',
-    'timestamp var_type var_name data'
-)
+class VarTypes(object):
+    """ Common variable types used in events.
+    """
+    MOTION = 'motion'
+    OPENED = 'opened'
+    TEMPERATURE = 'temperature'
+    OCCUPANCY = 'occupancy'
+    PRESENCE = 'presence'
+    FLOW_DETECTION = 'flow'
+    FLOOD_DETECTION = 'flood'
+    BADGE_DETETCION = 'badge'
+    DETECTION = 'detection'
+
+    VOLUME = 'volume'
+    ACK = 'ack'
+    VOLTAGE = 'voltage'
+    CURRENT = 'current'
+    FREQUENCY = 'frequency'
+    POWER = 'power'
+    ENERGY = 'energy'
+
 
 # common data keys
 
-VALUE = 'value'
-UNITS = 'units'
+class DataKeys(object):
+    """ Common key names used in the data part of events.
+    """
+    VALUE = 'value'
+    UNITS = 'units'
+
+
+class BasicEvent(namedtuple('BasicEvent', 'var_type var_name data')):
+    @property
+    def value(self):
+        return self.data.get(DataKeys.VALUE, None)
+
+
+class TimedEvent(namedtuple('TimedEvent', 'timestamp var_type var_name data')):
+    """ Extended named tuple with an enhanced constructor for accepting various
+     time stamp forms.
+    """
+    __slots__ = ()
+
+    def __new__(cls, timestamp, var_type, var_name, data):
+        if type(timestamp) is int:
+            evt_ts = datetime.datetime.utcfromtimestamp(timestamp / 1000)
+        else:
+            evt_ts = timestamp
+        return super(cls, TimedEvent).__new__(cls, evt_ts, var_type, var_name, data)
+
+    @property
+    def value(self):
+        return self.data.get(DataKeys.VALUE, None)
 
 # shared constants
 
@@ -116,9 +157,9 @@ def make_data(value=None, units=None, **kwargs):
     """
     data = {}
     if value is not None:
-        data[VALUE] = value
+        data[DataKeys.VALUE] = value
     if units:
-        data[UNITS] = units
+        data[DataKeys.UNITS] = units
     data.update(**kwargs)
     return data
 
@@ -143,7 +184,10 @@ def make_basic_event(var_type, var_name, value=None, units=None, **kwargs):
 def make_timed_event(ts, var_type, var_name, value=None, units=None, **kwargs):
     """ Same as make_basic_event, but for a TimedEvent.
 
-    :param datetime.datetime ts: the event timestamp
+    The accepted timestamp can be either a datetime.datetime or a msecs count
+    (such as in raw D-Bus transported events).
+
+    :param ts: the event timestamp
         (see :py:func:`make_basic_event` for the other parameters)
 
     :returns: the corresponding TimeEvent instance
