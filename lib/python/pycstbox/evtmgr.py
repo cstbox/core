@@ -48,9 +48,6 @@ signal EventManager.onCSTBoxEvent and pycstbox.events module.
 """
 
 __author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-__copyright__ = 'Copyright (c) 2012 CSTB'
-__vcs_id__ = '$Id$'
-__version__ = '1.0.0'
 
 import dbus
 import dbus.service
@@ -68,6 +65,7 @@ from pycstbox.log import Loggable
 SERVICE_NAME = "EventManager"
 
 SENSOR_EVENT_CHANNEL = 'sensor'
+CONTROL_EVENT_CHANNEL = 'control'
 SYSMON_EVENT_CHANNEL = 'sysmon'
 FRAMEWORK_EVENT_CHANNEL = 'framework'
 
@@ -135,7 +133,7 @@ class EventManagerObject(dbus.service.Object, Loggable):
         """ Timestamps and posts a CSTBoxEvent on the message bus.
 
         Events are automatically timestamp'ed before being posted on the bus.
-        The timestamp is set to the number of milliseconds elasped since the
+        The timestamp is set to the number of milliseconds elapsed since the
         origin of time (aka epoch).
 
         Appropriate synchronization is also applied to ensure events integrity
@@ -173,7 +171,7 @@ class EventManagerObject(dbus.service.Object, Loggable):
         time line.
 
         :param event:
-            the event to be emited, as a events.BasicEvent or a events.TimedEvent instance
+            the event to be emitted, as a events.BasicEvent or a events.TimedEvent instance
         """
         # delegates to the "universal" method
         return self.emitEvent(
