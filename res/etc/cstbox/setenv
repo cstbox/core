@@ -4,4 +4,4 @@ export CSTBOX_VAR_RUN="/var/run/cstbox"
 export CSTBOX_APPDATA="$CSTBOX_VAR_RUN/appdata"
 export CSTBOX_LIB_DPKG="$CSTBOX_HOME/lib/dpkg"
 
-export PYTHONPATH="$CSTBOX_HOME/lib/python"
+export PYTHONPATH="$CSTBOX_HOME/lib/python:$CSTBOX_HOME/deps/python"

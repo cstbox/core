@@ -160,6 +160,16 @@ class EventManagerObject(dbus.service.Object, Loggable):
             self.log_debug('Done')
         return True
 
+    @dbus.service.method(SERVICE_INTERFACE, in_signature='tsss')
+    def emitFullEvent(self, timestamp, var_type, var_name, data):
+        with self._emitLock:
+            self.log_debug(
+                "emiting : timestamp=%s var_type=%s var_name=%s data=%s",
+                timestamp, var_type, var_name, data)
+            self.onCSTBoxEvent(timestamp, var_type, var_name, data)
+            self.log_debug('Done')
+        return True
+
     def emitTimedEvent(self, event):
         """ Posts an event provided as a tuple.
 

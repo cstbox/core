@@ -131,6 +131,21 @@ def time_in_span(t, start, end):
         return t >= start or t <= end
 
 
+def to_milliseconds(ts):
+    """ Returns the milliseconds equivalent of a given time stamp.
+
+    If the parameter is a datetime instance, the result is the number of milliseconds elapsed from the epoch.
+    If it is provided as an integer, it is just returned as is since supposed to be already converted.
+
+    :param datetime ts: time stamp
+    :return: equivalent milliseconds from Epoch
+    """
+    if isinstance(ts, datetime.datetime):
+        delta = ts - datetime.datetime.utcfromtimestamp(0)
+        ts = delta.total_seconds() * 1000
+    return ts
+
+
 ServiceInformation = namedtuple('ServiceInformation', 'descr core running')
 """ Service descriptor namedtuple.
 

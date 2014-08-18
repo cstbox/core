@@ -86,8 +86,9 @@ class VarTypes(object):
     PRESENCE = 'presence'
     FLOW_DETECTION = 'flow'
     FLOOD_DETECTION = 'flood'
-    BADGE_DETETCION = 'badge'
+    BADGE_DETECTION = 'badge'
     DETECTION = 'detection'
+    NOTIFICATION = 'notification'
 
     VOLUME = 'volume'
     ACK = 'ack'
@@ -104,7 +105,7 @@ class DataKeys(object):
     """ Common key names used in the data part of events.
     """
     VALUE = 'value'
-    UNITS = 'units'
+    UNIT = 'unit'
 
 
 class BasicEvent(namedtuple('BasicEvent', 'var_type var_name data')):
@@ -159,7 +160,7 @@ def make_data(value=None, units=None, **kwargs):
     if value is not None:
         data[DataKeys.VALUE] = value
     if units:
-        data[DataKeys.UNITS] = units
+        data[DataKeys.UNIT] = units
     data.update(**kwargs)
     return data
 

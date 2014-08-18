@@ -7,6 +7,7 @@ stop_service() {
     fi
 }
 
+# remove all pyc files created for the package Python modules
 cleanup_pyc() {
     grep -e "\.py$" /var/lib/dpkg/info/${DPKG_MAINTSCRIPT_PACKAGE}.list | sed 's/$/c/' | while read fpath ; do
         rm -f $fpath
