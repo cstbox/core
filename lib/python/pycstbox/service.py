@@ -202,7 +202,7 @@ class ServiceContainer(Loggable):
             self._loop = gobject.MainLoop()
             signal.signal(signal.SIGTERM, self.__sigterm_handler)
             try:
-                self._loop.run()
+                self._loop.apply()
 
             except KeyboardInterrupt:
                 print
