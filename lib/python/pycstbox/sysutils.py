@@ -121,6 +121,7 @@ def time_in_span(t, start, end):
     :param datetime.time start: span starting time of day
     :param datetime.time end: span ending time of day
     :return: True if t in the time span
+    :rtype: boolean
     :raise ValueError: if any of the parameters is invalid of of t0 == t1
     """
     if start == end:
@@ -137,14 +138,44 @@ def to_milliseconds(ts):
     If the parameter is a datetime instance, the result is the number of milliseconds elapsed from the epoch.
     If it is provided as an integer, it is just returned as is since supposed to be already converted.
 
-    :param datetime ts: time stamp
+    :param datetime.datetime ts: time stamp
     :return: equivalent milliseconds from Epoch
+    :rtype: int
     """
     if isinstance(ts, datetime.datetime):
         delta = ts - datetime.datetime.utcfromtimestamp(0)
-        ts = delta.total_seconds() * 1000
+        ts = int(delta.total_seconds() * 1000)
+    elif isinstance(ts, datetime.date):
+        delta = datetime.datetime(ts.year, ts.month, ts.day)  - datetime.datetime.utcfromtimestamp(0)
+        ts = int(delta.total_seconds() * 1000)
     return ts
 
+
+def day_start_time(day):
+    """
+    :param datetime.date day: the day for which we want the start time
+    :return: the very first moment of the given day
+    :rtype: datetime
+    """
+    return datetime.datetime(day.year, day.month, day.day)
+
+
+def day_end_time(day):
+    """
+    :param datetime.date day: the day for which we want the end time
+    :return: the very last second of the given day
+    :rtype: datetime
+    """
+    return datetime.datetime(day.year, day.month, day.day) + datetime.timedelta(days=1, microseconds=-1)
+
+
+def day_bounds(day):
+    """
+    :param datetime.date day: the day for which we want the bounds
+    :return: a tuple containing the start and end times of the given day
+    :rtype: tuple of [datetime.datetime]
+    """
+    return day_start_time(day), day_end_time(day)
 
 ServiceInformation = namedtuple('ServiceInformation', 'descr core running')
 """ Service descriptor namedtuple.
