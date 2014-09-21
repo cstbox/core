@@ -26,9 +26,6 @@ restarting the framework.
 """
 
 __author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-__copyright__ = 'Copyright (c) 2013 CSTB'
-__vcs_id__ = '$Id$'
-__version__ = '1.0.0'
 
 import re
 import os
@@ -51,12 +48,11 @@ class CronItem(object):
     else.
     """
 
-    # regular expression for parsing a string representing a job. Since we are
+    # regular expressions for parsing a string representing a job. Since we are
     # dealing with system-wide crontabs, it includes the "user" field
-    ITEMREX = re.compile(
-        r'^\s*([^@#\s]+)\s+([^@#\s]+)\s+([^@#\s]+)\s+([^@#\s]+)' +
-        r'\s+([^@#\s]+)\s+([^@#\s]+)\s+([^#\n]*)(\s+#\s*([^\n]*)|$)'
-    )
+    SCHEDULE_SPECS = r'\s+'.join([r'([^@#\s]+)']*5)
+    SCHEDULE_SPECS_RE = re.compile(SCHEDULE_SPECS)
+    ITEM_RE = re.compile(r'^\s*' + SCHEDULE_SPECS + r'\s+([^@#\s]+)\s+([^#\n]*)(\s+#\s*([^\n]*)|$)')
 
     def __init__(self, line=None):
         """ Constructor.
@@ -95,11 +91,11 @@ class CronItem(object):
         line = line.strip()
         if line:
             if line[0] == '#':
-                match = self.ITEMREX.match(line[1:])
+                match = self.ITEM_RE.match(line[1:])
                 if match:
                     self.is_job = True
             else:
-                match = self.ITEMREX.match(line)
+                match = self.ITEM_RE.match(line)
                 if match:
                     self.is_job = True
                     self.enabled = True
