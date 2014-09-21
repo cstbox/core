@@ -80,6 +80,7 @@ class VarTypes(object):
     """ Common variable types used in events.
     """
     MOTION = 'motion'
+    MOVEMENT = 'movement'   # deprecated
     OPENED = 'opened'
     TEMPERATURE = 'temperature'
     OCCUPANCY = 'occupancy'
@@ -88,43 +89,72 @@ class VarTypes(object):
     FLOOD_DETECTION = 'flood'
     BADGE_DETECTION = 'badge'
     DETECTION = 'detection'
+
     NOTIFICATION = 'notification'
 
     VOLUME = 'volume'
-    ACK = 'ack'
     VOLTAGE = 'voltage'
     CURRENT = 'current'
     FREQUENCY = 'frequency'
     POWER = 'power'
     ENERGY = 'energy'
+    POWER_REACTIVE = 'power.react'
+    ENERGY_REACTIVE = 'energy.react'
 
+    ALARM_MODE = 'alarm_mode'
+    ACK = 'ack'
 
-# common data keys
+    LOGIC_TYPES = (
+        MOTION, MOVEMENT, OPENED, OCCUPANCY, PRESENCE, FLOW_DETECTION, FLOOD_DETECTION, DETECTION, NOTIFICATION
+    )
+    NUMERIC_TYPES = (
+        VOLUME, VOLTAGE, CURRENT, FREQUENCY, POWER, ENERGY, POWER_REACTIVE, ENERGY_REACTIVE, TEMPERATURE
+    )
+
 
 class DataKeys(object):
     """ Common key names used in the data part of events.
     """
     VALUE = 'value'
     UNIT = 'unit'
+    DELTA = 'delta'
 
 
 class BasicEvent(namedtuple('BasicEvent', 'var_type var_name data')):
+    """ Undated event conveying a state or value change of a given variable.
+
+    Contained attributes:
+        * var_type: (str) semantic type of the associated variable
+        * var_name: (str) associated variable name
+        * data: (dict) dictionary containing the variable properties, including its value, its units if any,....
+    """
     @property
     def value(self):
         return self.data.get(DataKeys.VALUE, None)
 
 
 class TimedEvent(namedtuple('TimedEvent', 'timestamp var_type var_name data')):
-    """ Extended named tuple with an enhanced constructor for accepting various
-     time stamp forms.
+    """ Time stamped event, extending the BasicEvent type.
+
+    The timestamp is stored as a UTC datetime.datetime.
     """
     __slots__ = ()
 
     def __new__(cls, timestamp, var_type, var_name, data):
-        if type(timestamp) is int:
+        """ Tuple initialization with parameters checking
+        :param timestamp: event time stamp
+        :type timestamp: int (msecs) or datetime.datetime
+        :param str var_type: variable type
+        :param str var_name: variable name
+        :param dict data: payload
+        """
+        if isinstance(timestamp, datetime.datetime):
+            evt_ts = timestamp
+        elif isinstance(timestamp, int):
             evt_ts = datetime.datetime.utcfromtimestamp(timestamp / 1000)
         else:
-            evt_ts = timestamp
+            raise TypeError('invalid timestamp value')
+
         return super(cls, TimedEvent).__new__(cls, evt_ts, var_type, var_name, data)
 
     @property
@@ -181,6 +211,7 @@ def make_basic_event(var_type, var_name, value=None, units=None, **kwargs):
     :returns: the corresponding BasicEvent instance
     """
     return BasicEvent(var_type, var_name, make_data(value, units, **kwargs))
+
 
 def make_timed_event(ts, var_type, var_name, value=None, units=None, **kwargs):
     """ Same as make_basic_event, but for a TimedEvent.
