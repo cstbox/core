@@ -29,6 +29,8 @@ import datetime
 import pycstbox.log as log
 _logger = log.getLogger('sysutils')
 
+ISO_DATE_FORMAT = "%Y-%m-%d"
+
 
 def str_2_bool(s):
     """ Parses a boolean value provided as a string and returns it.
@@ -448,4 +450,16 @@ def checked_dir(path):
     if not os.path.isdir(path):
         raise ValueError("path is not a directory : %s" % path)
     return path
+
+
+def to_unicode(s):
+    """ Converts a string to unicode if needed.
+    """
+    if isinstance(s, unicode):
+        return s
+    elif isinstance(s, str):
+        return s.decode('utf-8')
+    else:
+        raise TypeError()
+
 
