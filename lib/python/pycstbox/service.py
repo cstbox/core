@@ -202,15 +202,15 @@ class ServiceContainer(Loggable):
             self._loop = gobject.MainLoop()
             signal.signal(signal.SIGTERM, self.__sigterm_handler)
             try:
-                self._loop.apply()
+                self._loop.run()
 
             except KeyboardInterrupt:
                 print
                 self.log_info("KeyboardInterrupt caught")
                 self.terminate()
 
-            except:
-                self.log_critical(sys.exc_info()[0])
+            except Exception as e:
+                self.log_exception(e)
                 sys.exit(1)
 
             self.log_info('terminated')
