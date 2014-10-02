@@ -77,7 +77,7 @@ class Loggable(object):
         :param Logger logger:
             (optional) the logger to use
 
-        param str logname:
+        :param str logname:
             (optional) the name of the log created locally, if logger is not provided.
             Default: the class name
         """
