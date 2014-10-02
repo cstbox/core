@@ -91,6 +91,7 @@ class EventManager(service.ServiceContainer):
         if not channels:
             channels = [
                 SENSOR_EVENT_CHANNEL,
+                CONTROL_EVENT_CHANNEL,
                 SYSMON_EVENT_CHANNEL,
                 FRAMEWORK_EVENT_CHANNEL
             ]
