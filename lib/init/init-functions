@@ -37,8 +37,21 @@ PIDFILE=$VARRUN/$NAME.pid
 LOGFILE=$VARLOG/$NAME.log 
 SCRIPTNAME=/etc/init.d/$NAME
 
+# Exit if the daemon is not configured
+if [ -z "$DAEMON" ] ; then
+        echo "[FATAL] Cannot start $NAME : daemon executable not specified or not installed" >> $LOGFILE
+        exit 3
+fi
 # Exit if the package is not installed
-[ -x "$DAEMON" ] || exit 0
+if [ ! -f "$DAEMON" ] ; then
+        echo "[FATAL] Cannot start $NAME : file not found ($DAEMON)" >> $LOGFILE
+        exit 3
+fi
+if [ ! -x "$DAEMON" ] ; then
+        echo "[FATAL] Cannot start $NAME : file is not executable ($DAEMON)" >> $LOGFILE
+        exit 3
+fi
+
 
 # setup global definitions, such as PYTHONPATH
 . /etc/cstbox/setenv
