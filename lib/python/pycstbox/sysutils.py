@@ -25,6 +25,7 @@ import re
 import subprocess
 from collections import namedtuple
 import datetime
+import pytz
 
 import pycstbox.log as log
 _logger = log.getLogger('sysutils')
@@ -178,6 +179,37 @@ def day_bounds(day):
     :rtype: tuple of [datetime.datetime]
     """
     return day_start_time(day), day_end_time(day)
+
+
+_tz_UTC = pytz.timezone('UTC')
+_tz_paris = pytz.timezone('Europe/Paris')
+
+
+def ts_to_datetime(msecs):
+    """ Returns an UTC datetime from the equivalent milliseconds count.
+
+    The function is tolerant and accepts an already converted datetime or date.
+    It just returns it as its result.
+    :param int msecs: input time, supposed to be a number of milliseconds
+    :return: the equivalent UTC datetime
+    """
+    if isinstance(msecs, (datetime.datetime, datetime.date)):
+        return msecs
+    else:
+        return datetime.datetime.fromtimestamp(msecs / 1000, tz=_tz_UTC).astimezone(_tz_paris)
+
+
+def string_to_lines(s):
+    """ Given a string containing lines separated by newlines, returns
+    the equivalent list of strings, stripping the spaces in excess at
+    both ends.
+    :param str s: the concatenated lines as a string
+    :return: the concatenated lines as a list
+    :rtype: list of [str]
+    """
+    s = s.strip()
+    return [line.strip() for line in s.split('\n') if line]
+
 
 ServiceInformation = namedtuple('ServiceInformation', 'descr core running')
 """ Service descriptor namedtuple.
