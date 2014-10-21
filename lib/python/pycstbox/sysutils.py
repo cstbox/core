@@ -32,6 +32,10 @@ _logger = log.getLogger('sysutils')
 
 ISO_DATE_FORMAT = "%Y-%m-%d"
 
+CSTBOX_HOME = os.environ.get('CSTBOX_HOME', '/opt/cstbox')
+CSTBOX_BIN_DIR = os.path.join(CSTBOX_HOME, 'bin')
+CSTBOX_LIB_DIR = os.path.join(CSTBOX_HOME, 'lib/python')
+
 
 def str_2_bool(s):
     """ Parses a boolean value provided as a string and returns it.
