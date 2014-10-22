@@ -39,7 +39,7 @@ CRONTAB_HEADER = """# /etc/cron.d/cstbox: crontab entries for the CSTBox package
 
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-PYTHONPATH=/opt/cstbox/lib/python
+PYTHONPATH=/opt/cstbox/lib/python:/opt/cstbox/deps/python
 """
 
 
@@ -65,7 +65,7 @@ class CronItem(object):
         self.line = line.strip() if line else None
         self.is_job = False
         self.enabled = False
-        self.timespec = None
+        self._timespec = None
         self.user = pwd.getpwuid(os.getuid()).pw_name
         self.command = None
         self.comment = None
@@ -102,10 +102,26 @@ class CronItem(object):
 
             if self.is_job:
                 grps = match.groups()
-                self.timespec = tuple(grps[:5])
+                self._timespec = tuple(grps[:5])
                 self.user = grps[5]
                 self.command = grps[6]
                 self.comment = grps[8]
+
+    @property
+    def timespec(self):
+        return self._timespec
+
+    @timespec.setter
+    def timespec(self, v):
+        if isinstance(v, tuple):
+            self._timespec = v
+        elif isinstance(v, basestring):
+            match = self.SCHEDULE_SPECS_RE.match(v)
+            if match:
+                self._timespec = match.groups()
+            else:
+                raise ValueError('invalid scheduling rule: ' + v)
+
 
     def render(self):
         """ Returns the crontab record corresponding to the item definition.
