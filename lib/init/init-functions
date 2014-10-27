@@ -52,7 +52,6 @@ if [ ! -x "$DAEMON" ] ; then
         exit 3
 fi
 
-
 # setup global definitions, such as PYTHONPATH
 . /etc/cstbox/setenv
 
