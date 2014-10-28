@@ -16,6 +16,26 @@
 # License along with CSTBox.  If not, see <http://www.gnu.org/licenses/>.
 
 LOG_DIR="/var/log/cstbox"
+SCRIPT_NAME=$(basename $0)
+
+usage() {
+	echo "$SCRIPT_NAME: browses CSTBox logs files."
+	echo
+	echo "usage: $SCRIPT_NAME [log_name]"
+	echo "       $SCRIPT_NAME [-h | --help]"
+	echo
+	echo "log_name : the abbreviated name of the log "
+	echo "           ('cstbox-' prefix and file extension being optional)"
+	echo
+	echo "If no log name is supplied, the command displays the list of available ones."
+}
+
+case "$1" in
+"-h" | "--help")
+	usage
+	exit 0
+	;;
+esac
 
 if [ -z "$PAGER" ] ; then
     if (which most > /dev/null); then
