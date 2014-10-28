@@ -1,0 +1,13 @@
+_cbx_log() {
+    logs=""
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    for f in /var/log/cstbox/*.log ; do
+        f=$(basename $f)
+        f=${f##cstbox-}
+        logs+="${f%%.log} "
+    done
+    COMPREPLY=( $(compgen -W "${logs}" -- ${cur}) )
+    return 0
+}
+complete -F _cbx_log cbx-log.sh

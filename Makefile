@@ -27,6 +27,8 @@ make_extra_dirs:
 # dpkg related lib
 	mkdir -p $(DPKG_LIB_DIR)
 
+# bash completion configuration files
+	mkdir -p $(BASH_COMPLETION_D_INSTALL_DIR)
 
 copy_files: \
 	copy_bin_files \
@@ -42,6 +44,10 @@ copy_files: \
 	$(RSYNC) \
 	    --filter "-s_*/.*" \
 	    $(ETC_FROM)/logrotate.d/ $(BUILD_DIR)/$(LOGROTATE_D_INSTALL_DIR)
+
+	$(RSYNC) \
+	    --filter "-s_*/.*" \
+	    $(ETC_FROM)/bash_completion.d/ $(BUILD_DIR)/$(BASH_COMPLETION_D_INSTALL_DIR)
 
 	$(RSYNC) \
 	    --filter "-s_*/.*" \
