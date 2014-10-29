@@ -1,4 +1,4 @@
-/var/log/cstbox/cstbox-*.log
+/var/log/cstbox/*.log
 {
 	rotate 12
 	daily
