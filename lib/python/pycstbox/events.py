@@ -150,10 +150,10 @@ class TimedEvent(namedtuple('TimedEvent', 'timestamp var_type var_name data')):
         """
         if isinstance(timestamp, datetime.datetime):
             evt_ts = timestamp
-        elif isinstance(timestamp, int):
+        elif isinstance(timestamp, (long, int)):
             evt_ts = datetime.datetime.utcfromtimestamp(timestamp / 1000)
         else:
-            raise TypeError('invalid timestamp value')
+            raise TypeError('invalid timestamp value (%s of type:%s)' % (timestamp, type(timestamp)))
 
         return super(cls, TimedEvent).__new__(cls, evt_ts, var_type, var_name, data)
 
