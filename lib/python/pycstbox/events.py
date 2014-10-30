@@ -141,9 +141,15 @@ class TimedEvent(namedtuple('TimedEvent', 'timestamp var_type var_name data')):
     __slots__ = ()
 
     def __new__(cls, timestamp, var_type, var_name, data):
-        """ Tuple initialization with parameters checking
+        """ Tuple initialization with parameters checking.
+
+        The time stamp can be provided either as a :py:class:`datetime.datetime` or as a
+        count of milliseconds since Epoch (will be an int or a long in this case).
+
+        Remember that datetime values must be provided in UTC only.
+
         :param timestamp: event time stamp
-        :type timestamp: int (msecs) or datetime.datetime
+        :type timestamp: int, long (msecs) or datetime.datetime
         :param str var_type: variable type
         :param str var_name: variable name
         :param dict data: payload
