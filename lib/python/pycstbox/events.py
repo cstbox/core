@@ -80,7 +80,8 @@ class VarTypes(object):
     """ Common variable types used in events.
     """
     MOTION = 'motion'
-    MOVEMENT = 'movement'   # deprecated
+    MOVEMENT = 'movement'                   # deprecated
+    MOTION_DETECTION = 'motion_detection'   # deprecated
     OPENED = 'opened'
     TEMPERATURE = 'temperature'
     OCCUPANCY = 'occupancy'
@@ -105,7 +106,8 @@ class VarTypes(object):
     ACK = 'ack'
 
     LOGIC_TYPES = (
-        MOTION, MOVEMENT, OPENED, OCCUPANCY, PRESENCE, FLOW_DETECTION, FLOOD_DETECTION, DETECTION, NOTIFICATION
+        MOTION, OPENED, OCCUPANCY, PRESENCE, FLOW_DETECTION, FLOOD_DETECTION, DETECTION, NOTIFICATION,
+        MOVEMENT, MOTION_DETECTION
     )
     NUMERIC_TYPES = (
         VOLUME, VOLTAGE, CURRENT, FREQUENCY, POWER, ENERGY, POWER_REACTIVE, ENERGY_REACTIVE, TEMPERATURE
