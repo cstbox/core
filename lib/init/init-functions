@@ -39,17 +39,17 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the daemon is not configured
 if [ -z "$DAEMON" ] ; then
-        echo "[FATAL] Cannot start $NAME : daemon executable not specified or not installed" >> $LOGFILE
-        exit 3
+	echo "[FATAL] Cannot start $NAME : daemon executable not specified or not installed" >> $LOGFILE
+	exit 3
 fi
 # Exit if the package is not installed
 if [ ! -f "$DAEMON" ] ; then
-        echo "[FATAL] Cannot start $NAME : file not found ($DAEMON)" >> $LOGFILE
-        exit 3
+	echo "[FATAL] Cannot start $NAME : file not found ($DAEMON)" >> $LOGFILE
+	exit 3
 fi
 if [ ! -x "$DAEMON" ] ; then
-        echo "[FATAL] Cannot start $NAME : file is not executable ($DAEMON)" >> $LOGFILE
-        exit 3
+	echo "[FATAL] Cannot start $NAME : file is not executable ($DAEMON)" >> $LOGFILE
+	exit 3
 fi
 
 # setup global definitions, such as PYTHONPATH
@@ -81,20 +81,20 @@ do_start()
 		RETVAL=1
 	else
 		. $VARRUN/cstbox-dbus
-                echo "" >> $LOGFILE
-                echo "-------- Starting service $NAME at $(date)" >> $LOGFILE
-                # check start dependencies if any
-                if [ -n "$DEPENDS" ] ; then
-                    pgrep $DEPENDS 2>&1 > /dev/null
-                    if [ $? -ne 0 ] ; then
-                       echo "starting not runnning dependency : $DEPENDS"
-                       service $DEPENDS start
-                       sleep 1
-                    fi
-                fi
+		echo "" >> $LOGFILE
+		echo "-------- Starting service $NAME at $(date)" >> $LOGFILE
+		# check start dependencies if any
+		if [ -n "$DEPENDS" ] ; then
+			pgrep $DEPENDS 2>&1 > /dev/null
+			if [ $? -ne 0 ] ; then
+			   echo "starting not runnning dependency : $DEPENDS"
+			   service $DEPENDS start
+			   sleep 1
+			fi
+		fi
 
 		$DAEMON $DAEMON_ARGS >> $LOGFILE 2>&1 &
-                pid=$!
+		pid=$!
 		RETVAL="$?"
 	fi
 
@@ -123,8 +123,8 @@ do_stop()
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
 	if [ -f $PIDFILE ] ; then
-                echo "" >> $LOGFILE
-                echo "-------- Stopping service $NAME at $(date)" >> $LOGFILE
+		echo "" >> $LOGFILE
+		echo "-------- Stopping service $NAME at $(date)" >> $LOGFILE
 		read pid < $PIDFILE
 		kill $pid 2> /dev/null
 		RETVAL="$?"
@@ -132,43 +132,46 @@ do_stop()
 		RETVAL=1
 	fi
 	case "$RETVAL" in
-		0|1) log_end_msg 0 ;;
-		2) log_end_msg 1 ;;
+		0|1)
+			log_end_msg 0
+			rm -f $PIDFILE
+			;;
+		2)
+			log_end_msg 1
+			;;
 	esac
 
-	rm -f $PIDFILE
 	return "$RETVAL"
 }
 
 case "$1" in
-  start)
-	do_start
-	;;
-  stop)
-	do_stop
-	;;
-  status)
-        #status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
-	pgrep -c -f $DAEMON > /dev/null
-	case "$?" in
-		0) echo "$NAME is running" ; exit 0 ;;
-		*) echo "$NAME is not running" ; exit 1 ;;
-	esac
-        ;;
-  restart|force-reload)
-	do_stop
-	case "$?" in
-	  0|1)
+	start)
 		do_start
 		;;
-	  *)
-	  	# Failed to stop
-		log_end_msg 1
+	stop)
+		do_stop
 		;;
-	esac
-	;;
-  *)
-	echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
-	exit 3
-	;;
+	status)
+		pgrep -c -f $DAEMON > /dev/null
+		case "$?" in
+			0) echo "$NAME is running" ; exit 0 ;;
+			*) echo "$NAME is not running" ; exit 1 ;;
+		esac
+		;;
+	restart|force-reload)
+		do_stop
+		case "$?" in
+			0|1)
+				do_start
+				;;
+			*)
+				# Failed to stop
+				log_end_msg 1
+				;;
+		esac
+		;;
+	*)
+		echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+		exit 3
+		;;
 esac
