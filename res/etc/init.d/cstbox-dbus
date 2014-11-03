@@ -78,11 +78,11 @@ case "$1" in
                     fi
             fi 
         fi
-	case "$rc" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
-	esac
-	;;
+		case "$rc" in
+			0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+			2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+		esac
+		;;
   stop)
 	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" 
 	if [ -f $DBUS_VARS_FILE ] ; then
@@ -106,11 +106,9 @@ case "$1" in
 		log_failure_msg "$NAME is not running"
 		exit 2
 	fi
-       ;;
+	;;
   *)
 	echo "Usage: $SCRIPTNAME {start|stop|status}" >&2
 	exit 3
 	;;
 esac
-
-:
