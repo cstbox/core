@@ -37,6 +37,10 @@ CSTBOX_BIN_DIR = os.path.join(CSTBOX_HOME, 'bin')
 CSTBOX_LIB_DIR = os.path.join(CSTBOX_HOME, 'lib/python')
 
 
+tz_UTC = pytz.UTC
+tz_PARIS = pytz.timezone('Europe/Paris')
+
+
 def str_2_bool(s):
     """ Parses a boolean value provided as a string and returns it.
 
@@ -142,36 +146,52 @@ def time_in_span(t, start, end):
 def to_milliseconds(ts):
     """ Returns the milliseconds equivalent of a given time stamp.
 
-    If the parameter is a datetime instance, the result is the number of milliseconds elapsed from the epoch.
+    If the parameter is a datetime instance, the result is the number of milliseconds elapsed
+    from the epoch. The passed datetime is supposed to be naive or UTC.
+
     If it is provided as an integer, it is just returned as is since supposed to be already converted.
 
     :param datetime.datetime ts: time stamp
     :return: equivalent milliseconds from Epoch
-    :rtype: int
+    :rtype: long
     """
     if isinstance(ts, datetime.datetime):
         delta = ts - datetime.datetime.utcfromtimestamp(0)
-        ts = int(delta.total_seconds() * 1000)
+        ts = long(delta.total_seconds() * 1000)
     elif isinstance(ts, datetime.date):
-        delta = datetime.datetime(ts.year, ts.month, ts.day)  - datetime.datetime.utcfromtimestamp(0)
-        ts = int(delta.total_seconds() * 1000)
+        delta = datetime.datetime(ts.year, ts.month, ts.day) - datetime.datetime.utcfromtimestamp(0)
+        ts = long(delta.total_seconds() * 1000)
     return ts
 
 
-def day_start_time(day):
+def tod_to_num(dt):
+    """ Returns and numeric version of a time of day, using the formula :
+    result = 10000 * hour + 100 * minute + second + microsecond / 1000000.
+
+    :param dt: a datetime of time
+    :return: the numeric "equivalent" of the time of day
+    :rtype: float
     """
+    return dt.hour * 10000 + dt.minute * 100 + dt.second + dt.microsecond / 1000000.
+
+
+def day_start_time(day):
+    """ Returns the naive datetime of the beginning of a given day (i.e. hour, minute,... set to 0)
+
     :param datetime.date day: the day for which we want the start time
-    :return: the very first moment of the given day
+    :return: the very first moment of the given day (as a UTC date time)
     :rtype: datetime
     """
     return datetime.datetime(day.year, day.month, day.day)
 
 
 def day_end_time(day):
-    """
+    """ Returns the naive datetime of the beginning of a given day (i.e. 1 epsilon time before the beginning
+    of next day)
+
     :param datetime.date day: the day for which we want the end time
-    :return: the very last second of the given day
-    :rtype: datetime
+    :return: the very last second of the given day (as a naive date time)
+    :rtype: datetime.datetime
     """
     return datetime.datetime(day.year, day.month, day.day) + datetime.timedelta(days=1, microseconds=-1)
 
@@ -179,28 +199,40 @@ def day_end_time(day):
 def day_bounds(day):
     """
     :param datetime.date day: the day for which we want the bounds
-    :return: a tuple containing the start and end times of the given day
+    :return: a tuple containing the start and end times of the given day as naive datetime
     :rtype: tuple of [datetime.datetime]
     """
     return day_start_time(day), day_end_time(day)
 
 
-_tz_UTC = pytz.timezone('UTC')
-_tz_paris = pytz.timezone('Europe/Paris')
+def ts_to_datetime(msecs, tz=tz_UTC):
+    """ Returns a non naive datetime from the equivalent milliseconds count.
 
-
-def ts_to_datetime(msecs):
-    """ Returns an UTC datetime from the equivalent milliseconds count.
+    If not specified, the time zone is set to UTC.
 
     The function is tolerant and accepts an already converted datetime or date.
-    It just returns it as its result.
+    If it is not naive, it is adjusted to the requested time zone. If it is naive,
+    its time zone is set to the supplied one.
+
     :param int msecs: input time, supposed to be a number of milliseconds
+    :param datetime.tzinfo: the timezone of the returned datetime
     :return: the equivalent UTC datetime
+    :rtype: datetime.datetime
     """
     if isinstance(msecs, (datetime.datetime, datetime.date)):
+        if isinstance(msecs, datetime.datetime):
+            dt = msecs  # just rename it so that the code is more "natural" to read
+            if dt.tzinfo:
+                # non naive datetime => shift its time zone
+                return dt.astimezone(tz)
+            else:
+                # naive datetime => set its time zone
+                return dt.replace(tzinfo=tz)
+
         return msecs
+
     else:
-        return datetime.datetime.fromtimestamp(msecs / 1000, tz=_tz_UTC).astimezone(_tz_paris)
+        return datetime.datetime.fromtimestamp(msecs / 1000., tz=tz)
 
 
 def string_to_lines(s):
