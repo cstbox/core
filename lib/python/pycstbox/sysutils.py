@@ -165,7 +165,7 @@ def to_milliseconds(ts):
 
 
 def tod_to_num(dt):
-    """ Returns and numeric version of a time of day, using the formula :
+    """ Returns a numeric version of a time of day, using the formula :
     result = 10000 * hour + 100 * minute + second + microsecond / 1000000.
 
     :param dt: a datetime of time
