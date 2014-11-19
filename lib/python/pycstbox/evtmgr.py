@@ -35,6 +35,7 @@ connection to the right manager.
 
 The following channels are pre-defined as module properties:
     - SENSOR_EVENT_CHANNEL = 'sensor'
+    - CONTROL_EVENT_CHANNEL = 'control'
     - SYSMON_EVENT_CHANNEL = 'sysmon'
     - FRAMEWORK_EVENT_CHANNEL = 'framework'
 
