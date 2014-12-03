@@ -1,13 +1,13 @@
 #! /bin/bash
 ### BEGIN INIT INFO
-# Provides:          cstbox-avahi
+# Provides:          cstbox-avahi-ws
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: CSTBox service publication with Avahi 
-# Description:       The service is publish with a service type set to 
-#                    "_cstbox._tcp" and the hotsname is used for the 
+# Short-Description: CSTBox Web services publication with Avahi
+# Description:       The service is published with a service type set to
+#                    "_cstbox-ws._tcp" and the hostname is used for the
 #                    service name. This script must be executed only after
 #                    all other CSTBox services are started.
 ### END INIT INFO
@@ -33,8 +33,8 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="CSTBox Avahi service publication"
-NAME=cstbox-avahi
+DESC="CSTBox Avahi Web services publication"
+NAME=cstbox-avahi-ws
 INIT_SEQ=99
 CORE_SVC=1
 IFS=' ' read -a paths <<< $(whereis -b avahi-publish-service | cut -d: -f2)
@@ -42,7 +42,7 @@ DAEMON=${paths[0]}
 
 SYSTEM_ID=$(grep "system_id\s*=" /etc/cstbox/cstbox.cfg | cut -d= -f2 | tr -d ' ')
 [ -n "$SYSTEM_ID" ] || SYSTEM_ID=$(hostname) 
-DAEMON_ARGS="$SYSTEM_ID _cstbox._tcp 8080"
+DAEMON_ARGS="$SYSTEM_ID _cstbox-ws._http._tcp 8888"
 
 INIT_VERBOSE=yes
 
