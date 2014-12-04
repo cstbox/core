@@ -42,7 +42,7 @@ DAEMON=${paths[0]}
 
 SYSTEM_ID=$(grep "system_id\s*=" /etc/cstbox/cstbox.cfg | cut -d= -f2 | tr -d ' ')
 [ -n "$SYSTEM_ID" ] || SYSTEM_ID=$(hostname) 
-DAEMON_ARGS="$SYSTEM_ID _cstbox-admin._http._tcp 8080"
+DAEMON_ARGS="$SYSTEM_ID _cstbox-admin._tcp 8080"
 
 INIT_VERBOSE=yes
 
