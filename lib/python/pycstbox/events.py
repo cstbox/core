@@ -104,6 +104,8 @@ class VarTypes(object):
 
     ALARM_MODE = 'alarm_mode'
     ACK = 'ack'
+    NACK = 'nack'
+    TIMEOUT = 'timeout'
 
     LOGIC_TYPES = (
         MOTION, OPENED, OCCUPANCY, PRESENCE, FLOW_DETECTION, FLOOD_DETECTION, DETECTION, NOTIFICATION,
