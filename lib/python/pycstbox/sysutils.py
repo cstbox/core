@@ -26,6 +26,7 @@ import subprocess
 from collections import namedtuple
 import datetime
 import pytz
+import socket
 
 import pycstbox.log as log
 _logger = log.getLogger('sysutils')
@@ -35,7 +36,7 @@ ISO_DATE_FORMAT = "%Y-%m-%d"
 CSTBOX_HOME = os.environ.get('CSTBOX_HOME', '/opt/cstbox')
 CSTBOX_BIN_DIR = os.path.join(CSTBOX_HOME, 'bin')
 CSTBOX_LIB_DIR = os.path.join(CSTBOX_HOME, 'lib/python')
-
+CSTBOX_HOSTNAME = socket.getfqdn()
 
 tz_UTC = pytz.UTC
 tz_PARIS = pytz.timezone('Europe/Paris')
