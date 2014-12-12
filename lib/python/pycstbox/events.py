@@ -153,15 +153,15 @@ class TimedEvent(namedtuple('TimedEvent', 'timestamp var_type var_name data')):
         Remember that datetime values must be provided in UTC only.
 
         :param timestamp: event time stamp
-        :type timestamp: int, long (msecs) or datetime.datetime
+        :type timestamp: int, long, float (msecs) or datetime.datetime
         :param str var_type: variable type
         :param str var_name: variable name
         :param dict data: payload
         """
         if isinstance(timestamp, datetime.datetime):
             evt_ts = timestamp
-        elif isinstance(timestamp, (long, int)):
-            evt_ts = datetime.datetime.utcfromtimestamp(timestamp / 1000)
+        elif isinstance(timestamp, (long, int, float)):
+            evt_ts = datetime.datetime.utcfromtimestamp(int(timestamp / 1000))
         else:
             raise TypeError('invalid timestamp value (%s of type:%s)' % (timestamp, type(timestamp)))
 
