@@ -412,48 +412,51 @@ class ServicesManager(object):
             ])
             return result
 
+    def _start_stop_service(self, svc_name, action):
+        """ Internal method factoring services start and stop common sequence
+        :param str svc_name: the name of the service
+        :param action: the action ('start', 'stop' or 'restart')
+        """
+        if not svc_name:
+            raise ValueError('missing mandatory parameter')
+        if action not in ('start', 'stop', 'restart'):
+            raise ValueError('invalid action (must be "start", "stop" or "restart"')
+
+        self._checkroot()
+        try:
+            subprocess.check_output(
+                ['/usr/bin/service', self._scriptname_of(svc_name), action],
+                stderr=subprocess.STDOUT
+            )
+        except subprocess.CalledProcessError as e:
+            raise ServicesManagerError(
+                'cannot %s service %s (%s)' %
+                (action, svc_name, e.output.split('\n')[1].strip())
+            )
+
     def start(self, svc_name):
         """ Starts a given service.
 
         :param str svc_name: the name of the service
         :raises ServicesManagerError: if the 'service start' command fails
         """
-        if not svc_name:
-            raise ValueError('missing mandatory parameter')
-
-        self._checkroot()
-        try:
-            subprocess.check_output(
-                ['/usr/bin/service', self._scriptname_of(svc_name), 'start'],
-                stderr=subprocess.STDOUT
-            )
-        except subprocess.CalledProcessError as e:
-            raise ServicesManagerError(
-                'cannot start service %s (%s)' %
-                (svc_name, e.output.split('\n')[1].strip())
-            )
+        self._start_stop_service(svc_name, 'start')
 
     def stop(self, svc_name):
         """ Stops a given service.
 
         :param str svc_name: the name of the service
-        :raises ServicesManagerError: if the 'service stops' command fails
+        :raises ServicesManagerError: if the 'service stop' command fails
         """
-        if not svc_name:
-            raise ValueError('missing mandatory parameter')
+        self._start_stop_service(svc_name, 'stop')
 
-        self._checkroot()
-        try:
-            subprocess.call(
-                ['/usr/bin/service', self._scriptname_of(svc_name), 'stop'],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        except subprocess.CalledProcessError as e:
-            raise ServicesManagerError(
-                'cannot stop service %s (%s)' %
-                (svc_name, e.output.split('\n')[1].strip())
-            )
+    def restart(self, svc_name):
+        """ Restarts a given service.
+
+        :param str svc_name: the name of the service
+        :raises ServicesManagerError: if the 'service restart' command fails
+        """
+        self._start_stop_service(svc_name, 'restart')
 
     @staticmethod
     def application_layer_restart():
