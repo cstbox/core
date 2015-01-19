@@ -96,6 +96,43 @@ def parse_period(s):
         raise ValueError('invalid period value (%s)' % s)
 
 
+LocalTimeUnits = namedtuple('LocalTimeUnits', 'hour minute second')
+
+_time_units_i18n = {
+    'en': LocalTimeUnits(('hour', 'hours'), ('minute', 'minutes'), ('second', 'seconds')),
+    'fr': LocalTimeUnits(('heure', 'heures'), ('minute', 'minutes'), ('seconde', 'secondes')),
+}
+
+
+def human_friendly_delay_format(secs, lang="en"):
+    """ Returns a human friendly formatted string corresponding to the number of seconds.
+
+    Multiples (minutes, hours,...) will be used to render the value the friendliest possible.
+
+    :param int secs: the delay in seconds
+    :param str lang: language code
+    :return: a string such as "2 hours 12 minutes 5 seconds"
+    """
+    secs = int(secs)
+
+    hours = int(secs / 3600)
+    secs -= hours * 3600
+    minutes = int(secs / 60)
+    secs -= minutes * 60
+
+    trans = _time_units_i18n.get(lang, _time_units_i18n['en'])
+
+    s = []
+    if hours:
+        s.append('%d %s' % (hours, trans.hour[hours > 1]))
+    if minutes:
+        s.append('%d %s' % (minutes, trans.minute[minutes > 1]))
+    if secs:
+        s.append('%d %s' % (secs, trans.minute[secs > 1]))
+
+    return ' '.join(s)
+
+
 def parse_time_of_day(s):
     """ Parses a string representing a (possibly abbreviated) time of day and returns the corresponding
     `datetime.time` instance.
@@ -533,5 +570,6 @@ def to_unicode(s):
         return s.decode('utf-8')
     else:
         raise TypeError()
+
 
 
