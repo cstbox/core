@@ -128,7 +128,7 @@ def human_friendly_delay_format(secs, lang="en"):
     if minutes:
         s.append('%d %s' % (minutes, trans.minute[minutes > 1]))
     if secs:
-        s.append('%d %s' % (secs, trans.minute[secs > 1]))
+        s.append('%d %s' % (secs, trans.second[secs > 1]))
 
     return ' '.join(s)
 
