@@ -587,6 +587,7 @@ class Device(DevCfgObject):
     address = None
     type = None
     location = None
+    enabled = False
 
     def __init__(self, uid, **kwargs):
         """ Constructor
