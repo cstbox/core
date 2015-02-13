@@ -83,10 +83,10 @@ def get_object():
 
 
 class BrokerObject(dbus.service.Object):
-    def __init__(self):
+    def __init__(self, logger=None):
         super(BrokerObject, self).__init__()
         self._cfg = devcfg.DeviceNetworkConfiguration(autoload=True)
-        self._logger = None
+        self._logger = logger
 
     def set_logger(self, logger):
         self._logger = logger
