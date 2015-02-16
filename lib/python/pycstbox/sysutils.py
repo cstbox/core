@@ -323,6 +323,7 @@ class ServicesManager(object):
     def __init__(self):
         self._re_pidfiles = re.compile(self.PIDFILE_PATTERN)
         self._re_scripts = re.compile(self.INIT_SCRIPT_PATTERN)
+        self._logger = _logger.getChild('svcmgr')
 
         self._svcs = {}
         for f in [f for f in os.listdir(self.INIT_SCRIPTS_DIR)
@@ -330,7 +331,7 @@ class ServicesManager(object):
             svc_name = self._servicename_of(f)
             self._svcs[svc_name] = self._get_service_props(svc_name)
 
-        _logger.debug('known services: %s', self._svcs)
+        self._logger.info('known services: %s', self._svcs)
 
     @property
     def known_services(self):
@@ -461,8 +462,10 @@ class ServicesManager(object):
 
         self._checkroot()
         try:
+            script = self._scriptname_of(svc_name)
+            self._logger.info('executing command : service %s %s', script, action)
             subprocess.check_output(
-                ['/usr/bin/service', self._scriptname_of(svc_name), action],
+                ['/usr/bin/service', script, action],
                 stderr=subprocess.STDOUT
             )
         except subprocess.CalledProcessError as e:
