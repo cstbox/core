@@ -1,10 +1,10 @@
 Package: cstbox-core
-Version: 1.0.0
+Version: 1.0.1
 Section: base
 Priority: optional
 Architecture: all
-Depends: python (>=2.7), python (<<3), python-dbus, python-gobject, python-gobject-2, dbus-x11, python-dateutil, avahi-utils
-Suggests: openntpd,cstbox-deps,cstbox-ext-webui,cstbox-ext-webservices
+Depends: python (>=2.7), python (<<3), python-dbus, python-gobject, python-gobject-2, dbus-x11, avahi-utils, cstbox-deps
+Suggests: openntpd,cstbox-ext-webui,cstbox-ext-webservices
 Maintainer: Eric Pascual <eric.pascual@cstb.fr>
 Description: CSTBox runtime core part
  This package installs all the core sub-systems of the CSTBox
