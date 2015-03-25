@@ -7,7 +7,7 @@ PYCSTBOX_HOME="$CSTBOX_HOME/lib/python/pycstbox"
 
 AUTO_START=${AUTO_START:=0}
 
-echo "Adding static mapping of serial ports..."
+echo "Adding static mapping of USB ports..."
 
 UDEV_RULES_TARGET="/etc/udev/rules.d/70-persistent-usb.rules"
 UDEV_RULES_LIB="$CSTBOX_HOME/lib/udev-rules.d"
