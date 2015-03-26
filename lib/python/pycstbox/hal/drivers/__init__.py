@@ -62,6 +62,8 @@ def get_hal_device_classes():
                 m = importlib.import_module(modfqn)
             except InvalidCfgFile as e:
                 _logger.error("invalid metadata : (%s) %s", e.message, e.reason)
+            except SyntaxError as e:
+                _logger.error("syntax error in module '%s' (%d:%d)", e.filename, e.lineno, e.offset)
             except Exception as e:
                 _logger.error("registration error : (%s) %s", e.__class__.__name__, e.message)
             else:
