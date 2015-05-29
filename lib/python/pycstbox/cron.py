@@ -42,6 +42,23 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 PYTHONPATH=/opt/cstbox/lib/python:/opt/cstbox/deps/python
 """
 
+# try to import custom extensions
+try:
+    from cron_extensions import CronTabHooks
+except ImportError:
+    class CronTabHooks(object):
+        """ Empty hooks used as fallback when no extension is installed.
+        """
+        def pre_write(self, path):
+            """ Called before the crontab is written to disk.
+            :param str path: the target path
+            """
+
+        def post_write(self, path):
+            """ Called after the crontab has been written to disk.
+            :param str path: the target path
+            """
+
 
 class CronItem(object):
     """ An item of the crontab, be it a job specification or anything
@@ -53,22 +70,29 @@ class CronItem(object):
     SCHEDULE_SPECS = r'\s+'.join([r'([^@#\s]+)']*5)
     SCHEDULE_SPECS_RE = re.compile(SCHEDULE_SPECS)
     ITEM_RE = re.compile(r'^\s*' + SCHEDULE_SPECS + r'\s+([^@#\s]+)\s+([^#\n]*)(\s+#\s*([^\n]*)|$)')
+    ITEM_RE_NO_USER_FIELD = re.compile(r'^\s*' + SCHEDULE_SPECS + r'\s+([^#\n]*)(\s+#\s*([^\n]*)|$)')
 
-    def __init__(self, line=None):
+    def __init__(self, line=None, system_crontab=True):
         """ Constructor.
 
         :param str line:
             (optional) a line to be parsed. If not provided, all fields are
-            initialized to an empty value, but the user one, defaulted to
-            the current user id
+            initialized to an empty value. It item belongs to a system crontab,
+            the user field is defaulted to the current user id
+        :param bool system_crontab:
+            if True (default), cron items use the system crontab format,
+            including the user field. If false, no user field is included
+            in the cron items.
         """
         self.line = line.strip() if line else None
         self.is_job = False
         self.enabled = False
         self._timespec = None
-        self.user = pwd.getpwuid(os.getuid()).pw_name
+        self._system_crontab = system_crontab
+        self.user = pwd.getpwuid(os.getuid()).pw_name if system_crontab else None
         self.command = None
         self.comment = None
+        self._item_re = self.ITEM_RE if system_crontab else self.ITEM_RE_NO_USER_FIELD
 
         if line:
             self.parse(line)
@@ -91,11 +115,11 @@ class CronItem(object):
         line = line.strip()
         if line:
             if line[0] == '#':
-                match = self.ITEM_RE.match(line[1:])
+                match = self._item_re.match(line[1:])
                 if match:
                     self.is_job = True
             else:
-                match = self.ITEM_RE.match(line)
+                match = self._item_re.match(line)
                 if match:
                     self.is_job = True
                     self.enabled = True
@@ -103,13 +127,18 @@ class CronItem(object):
             if self.is_job:
                 grps = match.groups()
                 self._timespec = tuple(grps[:5])
-                self.user = grps[5]
-                self.command = grps[6]
-                self.comment = grps[8]
+                if self._system_crontab:
+                    self.user, self.command, _, self.comment = grps[5:]
+                else:
+                    self.command, _, self.comment = grps[5:]
 
     @property
     def timespec(self):
         return self._timespec
+
+    @property
+    def is_system_crontab(self):
+        return self._system_crontab
 
     @timespec.setter
     def timespec(self, v):
@@ -121,7 +150,6 @@ class CronItem(object):
                 self._timespec = match.groups()
             else:
                 raise ValueError('invalid scheduling rule: ' + v)
-
 
     def render(self):
         """ Returns the crontab record corresponding to the item definition.
@@ -142,18 +170,23 @@ class CronItem(object):
             return self.line or ''
 
 
-class CronTab(object):
+class CronTab(object, CronTabHooks):
     """ The crontab.
     """
-    def __init__(self, path=CSTBOX_CRONTAB):
+    def __init__(self, path=CSTBOX_CRONTAB, system_crontab=True):
         """ Constructor.
 
         :param str path:
             an optional path from which the crontab is loaded, if it exists.
             default: CSTBox crontab path
+        :param bool system_crontab:
+            if True (default), cron items use the system crontab format,
+            including the user field. If false, no user field is included
+            in the cron items.
         """
         self._path = path
-        self._items = [CronItem(line) for line in CRONTAB_HEADER.split('\n')]
+        self._system_crontab = system_crontab
+        self._items = [CronItem(line, system_crontab) for line in CRONTAB_HEADER.split('\n')]
 
         if path and os.path.exists(path):
             self.read(path)
@@ -185,18 +218,33 @@ class CronTab(object):
         wpath = path or self._path
         if not wpath:
             raise ValueError('no path defined for writing')
+
+        self.pre_write(wpath)
+
         with open(wpath, 'wt') as f:
             for item in self._items:
                 f.write('%s\n' % item.render())
         if not self._path:
             self._path = wpath
 
+        self.post_write(wpath)
+
     def add(self, item):
         """ Adds an item to the crontab.
 
         Passing None is allowed and will add an empty CronItem.
+
+        :param CronItem item:
+            the item to be added
+
+        :raises:
+            ValueError if the passed item is not None and is not of same type
+            (system or user) as the crontab itself
         """
-        self._items.append(item or CronItem())
+        if item:
+            if item.is_system_crontab != self._system_crontab:
+                raise ValueError('cronitem type mismatch')
+        self._items.append(item or CronItem(system_crontab=self._system_crontab))
 
     def remove(self, item):
         """ Removes a given item from the crontab."""
@@ -207,11 +255,11 @@ class CronTab(object):
         return iter(self._items)
 
     def iterjobs(self):
-        """ Returns an iterator on the items representing jobs."""
+        """ Returns an iterator on the cron items representing jobs."""
         return (item for item in self._items if item.is_job)
 
     def find_comment(self, comment):
-        """ Return a list of crons having a specific comment."""
+        """ Return a list of cron items having a specific comment."""
         result = []
         for job in self.iterjobs():
             if job.comment == comment:
@@ -219,7 +267,7 @@ class CronTab(object):
         return result
 
     def find_command(self, command):
-        """ Return a list of crons using a command."""
+        """ Return a list of cron items using a command."""
         result = []
         for job in self.iterjobs():
             if job.command == command:
