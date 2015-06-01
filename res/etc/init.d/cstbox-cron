@@ -39,7 +39,8 @@ CORE_SVC=1
 # the CSTBox crontab is stored with all the other CSTBox configuration files
 CSTBOX_CRONTAB="/etc/cstbox/crontab"
 # per package crontab (will be a symlink to real file above)
-CRON_D_CONFIG="/etc/cron.d/cstbox"
+CRONTABS_HOME="/etc/cron.d"
+CRON_D_CONFIG="$CRONTABS_HOME/cstbox"
 
 INIT_VERBOSE=yes
 
@@ -60,6 +61,8 @@ case "$1" in
             log_daemon_msg "Already started"
             log_end_msg 2
         else
+            # create cron configuration directory in case not here
+            [ -e $CRONTABS_HOME ] || mkdir -p $CRONTABS_HOME
             ln -s $CSTBOX_CRONTAB $CRON_D_CONFIG
             [ "$VERBOSE" != no ] && log_daemon_msg "Starting $NAME ($DESC)"
             if [ $? -eq 0 ] ; then
