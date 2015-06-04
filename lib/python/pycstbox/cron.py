@@ -21,7 +21,7 @@
 In order to avoid cluttering the host system, CSTBox cron settings are gathered
 in a package related crontab stored in /etc/cron.d, as described in cron man page.
 This way, we can deactivate all CSTBox cron tasks when shutting it down, without
-loosing their definitions, and this be able to reactivate them back again when
+loosing their definitions, and then be able to reactivate them back again when
 restarting the framework.
 """
 
@@ -170,8 +170,13 @@ class CronItem(object):
             return self.line or ''
 
 
-class CronTab(object, CronTabHooks):
+class CronTab(CronTabHooks, object):
     """ The crontab.
+
+    Despite its declaration the class does not inherit from CronTabHooks with the usual semantics.
+    This must be seen here as a mixin mechanism, allowing to easily override the hooks by providing
+    an ad-hoc version of :py:class:`CronTabHooks`. This is the reason why `object` has been left in
+    the super-classes list, although not required from Python language strict point of view.
     """
     def __init__(self, path=CSTBOX_CRONTAB, system_crontab=True):
         """ Constructor.
