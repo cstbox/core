@@ -57,7 +57,7 @@ the other with the "movement" one.
 
 **BEWARE:** since this can lead to unclear configurations, this behaviour is subject
 to be modified in the future to adopt the approach commonly used for programming
- languages (ie identifiers uniqueness)
+languages (ie identifiers uniqueness)
 
 At implementation level, events are conveniently manipulated as tuples, which
 components are the ones listed above. Python tuples are an efficient and
@@ -67,7 +67,6 @@ immutable entity.
 For convenience, named tuples are also defined here, conveying explicitly the
 name of the event components, and ensuring that the components sequence is
 respected in the tuple.
-
 """
 
 __author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
@@ -90,6 +89,7 @@ class VarTypes(object):
     FLOOD_DETECTION = 'flood'
     BADGE_DETECTION = 'badge'
     DETECTION = 'detection'
+    USAGE = 'usage'
 
     NOTIFICATION = 'notification'
 
@@ -109,7 +109,7 @@ class VarTypes(object):
 
     LOGIC_TYPES = (
         MOTION, OPENED, OCCUPANCY, PRESENCE, FLOW_DETECTION, FLOOD_DETECTION, DETECTION, NOTIFICATION,
-        MOVEMENT, MOTION_DETECTION
+        MOVEMENT, MOTION_DETECTION, USAGE
     )
     NUMERIC_TYPES = (
         VOLUME, VOLTAGE, CURRENT, FREQUENCY, POWER, ENERGY, POWER_REACTIVE, ENERGY_REACTIVE, TEMPERATURE
