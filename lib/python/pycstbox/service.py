@@ -198,7 +198,6 @@ class ServiceContainer(Loggable):
                 else:
                     self.log_info('svcobj %s started' % svc_obj)
 
-
             self._loop = gobject.MainLoop()
             signal.signal(signal.SIGTERM, self.__sigterm_handler)
             try:

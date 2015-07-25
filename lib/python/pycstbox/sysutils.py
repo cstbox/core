@@ -46,7 +46,9 @@ def str_2_bool(s):
     """ Parses a boolean value provided as a string and returns it.
 
     Accepted values for True:
+
         true, t, yes, y, 1
+
     Any other value is converted as False
     """
     if not s:
@@ -62,19 +64,23 @@ def parse_period(s):
     number of seconds.
 
     The accepted format is:
+
         <nn> [ 's' | 'm' | 'h' ]
+
     with:
+
         <nn> : a positive integer value
 
     The suffix (if provided) indicates the units, with the following
     convention:
+
         's' : seconds
         'm' : minutes
         'h' : hours
+
     If not provided, units are defaulted to seconds.
 
     :returns: the corresponding number of seconds. If the parameter is None or an empty string, 0 is return.
-
     :raises ValueError: if input string is not valid
     """
     if not s:
@@ -277,6 +283,7 @@ def string_to_lines(s):
     """ Given a string containing lines separated by newlines, returns
     the equivalent list of strings, stripping the spaces in excess at
     both ends.
+
     :param str s: the concatenated lines as a string
     :return: the concatenated lines as a list
     :rtype: list of [str]
