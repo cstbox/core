@@ -159,6 +159,17 @@ def loglevel_from_args(args):
     return getattr(logging, args.loglevel.upper())
 
 
-# default module initialization at import time
+class DummyLogger(logging.Logger):
+    """ A do-nothing logger which can be used as a fallback.
+    """
+    def _noop(self, *args, **kwargs):
+        pass
+
+    def __init__(self):
+        super(DummyLogger, self).__init__('')
+
+    info = warn = warning = error = fatal = critical = debug = _noop
+
+# default module initialization at import time
 setup_logging()
 
