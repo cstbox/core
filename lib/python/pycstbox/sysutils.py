@@ -582,4 +582,20 @@ def to_unicode(s):
         raise TypeError()
 
 
+def symbol_for_name(fqdn):
+    """ Returns the symbol (class, def, module variable,...) which fully qualified name is passed.
 
+    :param str fqdn: the fully qualified name of the symbol
+    :return: the corresponding symbol, if found
+    :rtype: Any
+    :raises ImportError: if the package name could not be imported
+    :raises NameError: if no symbol with the given name is not defined in the package
+    """
+    module_name, _, symbol_name = fqdn.rpartition('.')
+    import importlib
+    try:
+        module = importlib.import_module(module_name)
+        return getattr(module, symbol_name)
+
+    except AttributeError:
+        raise NameError("name '%s' is not defined" % fqdn)
