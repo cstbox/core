@@ -56,9 +56,10 @@ import dbus.service
 import time
 import threading
 import json
+from collections import namedtuple
 
-import pycstbox.service as service
-import pycstbox.dbuslib as dbuslib
+from pycstbox import service
+from pycstbox import dbuslib
 from pycstbox.log import Loggable
 
 # Various names definitions
@@ -191,6 +192,10 @@ class EventManagerObject(dbus.service.Object, Loggable):
             event.var_name,
             json.dumps(event.data)
         )
+
+
+EventOnBus = namedtuple('EventOnBus', 'timestamp, var_type, var_name, data')
+""" Content of an event as it circulates on D-Bus."""
 
 
 def get_object(channel):
