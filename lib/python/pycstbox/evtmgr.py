@@ -71,6 +71,8 @@ CONTROL_EVENT_CHANNEL = 'control'
 SYSMON_EVENT_CHANNEL = 'sysmon'
 FRAMEWORK_EVENT_CHANNEL = 'framework'
 
+ALL_CHANNELS = (SENSOR_EVENT_CHANNEL, CONTROL_EVENT_CHANNEL, SYSMON_EVENT_CHANNEL, FRAMEWORK_EVENT_CHANNEL)
+
 SERVICE_INTERFACE = dbuslib.make_interface_name(SERVICE_NAME)
 
 
@@ -91,12 +93,7 @@ class EventManager(service.ServiceContainer):
             not provided, all pre-defined channels will be used.
         """
         if not channels:
-            channels = [
-                SENSOR_EVENT_CHANNEL,
-                CONTROL_EVENT_CHANNEL,
-                SYSMON_EVENT_CHANNEL,
-                FRAMEWORK_EVENT_CHANNEL
-            ]
+            channels = ALL_CHANNELS
         svc_objects = [(EventManagerObject(ch), '/' + ch) for ch in channels]
 
         super(EventManager, self).__init__(SERVICE_NAME, conn, svc_objects)
