@@ -18,7 +18,7 @@ def remove_dead_pid(args):
 
     for pid_file_name in [n for n in os.listdir(args.pid_files_dir) if n.endswith('.pid')]:
         pid_path = os.path.join(args.pid_files_dir, pid_file_name)
-        with file(pid_file_name) as fp:
+        with file(pid_path) as fp:
             pid = int(fp.readline().strip())
 
         try:
@@ -26,7 +26,7 @@ def remove_dead_pid(args):
         except OSError as err:
             if err.errno == ESRCH:
                 os.remove(pid_path)
-                logger.info('dead process PID file removed: %s', pid_path)
+                logger.info('dead process PID file removed: %s', pid_file_name)
 
 
 def dir_path(s):
