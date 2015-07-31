@@ -3,3 +3,5 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 PYTHONPATH=/opt/cstbox/lib/python:/opt/cstbox/deps/python
+
+*/5 * * * * root /opt/cstbox/bin/cbx-pid-janitor.py     # CSTBox PID files cleanup
