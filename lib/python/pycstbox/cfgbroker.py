@@ -25,11 +25,6 @@ Its main function is to keep the current configuration in memory and to provide 
 over D-Bus as requested by client components of the application.
 """
 
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-__copyright__ = 'Copyright (c) 2013 CSTB'
-__vcs_id__ = '$Id$'
-__version__ = '1.0.0'
-
 import logging
 import json
 
@@ -38,6 +33,8 @@ import dbus.service
 import pycstbox.service as service
 import pycstbox.devcfg as devcfg
 import pycstbox.dbuslib as dbuslib
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
 
 SERVICE_NAME = "ConfigurationBroker"
 BUS_NAME = dbuslib.make_bus_name(SERVICE_NAME)
@@ -93,11 +90,10 @@ class BrokerObject(dbus.service.Object):
 
     @dbus.service.method(SERVICE_INTERFACE, in_signature='s', out_signature='s')
     def get_coordinator(self, c_id):
-        """ Returns a device given the id of the coordinator it is attached to and its
-        own id in this scope.
+        """ Returns the properties of a coordinator given its id.
 
         :param str c_id: the id of the coordinator the device is attached to (ex: x2d1)
-        :returns str: JSON representation of the device properties
+        :returns str: JSON representation of the coordinator properties
         """
         if self._logger.isEnabledFor(logging.DEBUG):
             self._logger.debug("get_coordinator called with c_id=%s" % c_id)
@@ -148,7 +144,6 @@ class BrokerObject(dbus.service.Object):
             self._logger.debug("get_coordinators called")
 
         return self._cfg.keys()
-
 
     @dbus.service.method(SERVICE_INTERFACE, in_signature='s', out_signature='as')
     def get_coordinator_devices(self, c_id):
