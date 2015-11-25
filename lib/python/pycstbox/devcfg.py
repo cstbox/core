@@ -22,13 +22,11 @@ The configuration data are stored as a single JSON file, which default path
 is **/etc/cstbox/devices.cfg**.
 """
 
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-__copyright__ = 'Copyright (c) 2012 CSTB'
-__vcs_id__ = '$Id$'
-__version__ = '1.0.0'
-
 import json
 import os
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
+
 
 DEFAULT_PATH = '/etc/cstbox/devices.cfg'
 METADATA_HOME = os.path.join(os.path.dirname(__file__), "devcfg.d")
