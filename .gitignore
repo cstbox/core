@@ -1,5 +1,7 @@
+/staging
 .backup
 *~
+**/*.tgz
 .ropeproject
 .idea
 .metadata
@@ -10,3 +12,4 @@
 *.deb
 cstbox-*_all/
 deprecated/
+*-files.txt
