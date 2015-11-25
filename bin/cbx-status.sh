@@ -15,19 +15,36 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with CSTBox.  If not, see <http://www.gnu.org/licenses/>.
 
-PIDFILES_DIR=/var/run/cstbox
+PID_FILES_DIR=/var/run/cstbox
+INIT_SCRIPTS_DIR=/etc/init.d
 
-pidfiles=$(ls $PIDFILES_DIR/cstbox-*.pid 2> /dev/null)
+scripts=$(ls $INIT_SCRIPTS_DIR/cstbox-* 2> /dev/null)
+pidfiles=$(ls $PID_FILES_DIR/cstbox-*.pid 2> /dev/null)
+not_deamons="cstbox-cron"
+
 if [ -n "$pidfiles" ] ; then
-    echo "Currently running CSTBox services:"
-    for f in $pidfiles ; do 
-        svc=$(echo $(basename $f) | cut -d. -f1)
-        read pid < $f
-        echo "- $svc [$pid]"
+    echo -e "\x1b[1mCSTBox services running status:\x1b[0m"
+    for script in $scripts; do
+        svc=$(basename $script)
+        if [ -n "${not_deamons##*$svc*}" ] ; then
+            pidfile=$PID_FILES_DIR/$svc.pid
+            if [ -f $pidfile ] ; then
+                svc="$svc                                    "
+                svc=${svc:0:25}
+                read pid < $pidfile
+                if ps $pid > /dev/null ; then
+                    echo -e "- $svc [\x1b[32mrunning\x1b[0m]"
+                else
+                    echo -e "- $svc [\x1b[31mstopped\x1b[0m] (orphan PID file)"
+                fi
+            else
+                echo -e "- $svc [\x1b[31mstopped\x1b[0m]"
+            fi
+        fi
     done
     rc=0
 else
-    echo "No CSTBox service is currently running."
+    echo -e "\x1b[31mNo CSTBox service is currently running.\x1b[0m"
     rc=2
 fi
 exit $rc
