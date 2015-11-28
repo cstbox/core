@@ -27,18 +27,18 @@ if [ -n "$pidfiles" ] ; then
     for script in $scripts; do
         svc=$(basename $script)
         if [ -n "${not_deamons##*$svc*}" ] ; then
+            label="$svc                                    "
+            label=${svc:0:25}
             pidfile=$PID_FILES_DIR/$svc.pid
             if [ -f $pidfile ] ; then
-                svc="$svc                                    "
-                svc=${svc:0:25}
                 read pid < $pidfile
                 if ps $pid > /dev/null ; then
-                    echo -e "- $svc [\x1b[32mrunning\x1b[0m]"
+                    echo -e "- $label [\x1b[32mrunning\x1b[0m]"
                 else
-                    echo -e "- $svc [\x1b[31mstopped\x1b[0m] (orphan PID file)"
+                    echo -e "- $label [\x1b[31mstopped\x1b[0m] (orphan PID file)"
                 fi
             else
-                echo -e "- $svc [\x1b[31mstopped\x1b[0m]"
+                echo -e "- $label [\x1b[31mstopped\x1b[0m]"
             fi
         fi
     done
