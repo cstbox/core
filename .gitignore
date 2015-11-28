@@ -12,4 +12,6 @@
 *.deb
 cstbox-*_all/
 deprecated/
-*-files.txtRELEASE-VERSION
+*-files.txt
+RELEASE-VERSION
+
