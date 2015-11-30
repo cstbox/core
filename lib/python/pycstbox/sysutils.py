@@ -472,7 +472,7 @@ class ServicesManager(object):
             script = self._scriptname_of(svc_name)
             self._logger.info('executing command : service %s %s', script, action)
             subprocess.check_output(
-                ['/usr/bin/service', script, action],
+                [os.path.join(self.INIT_SCRIPTS_DIR, script), action],
                 stderr=subprocess.STDOUT
             )
         except subprocess.CalledProcessError as e:
@@ -510,7 +510,7 @@ class ServicesManager(object):
         """ Restarts only the application layer services."""
         ServicesManager._checkroot()
         subprocess.Popen(
-            ['/usr/bin/service', 'cstbox', 'restart', '--applayer'],
+            [os.path.join(ServicesManager.INIT_SCRIPTS_DIR, 'cstbox'), 'restart', '--applayer'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
@@ -520,7 +520,7 @@ class ServicesManager(object):
         """ Restarts all CSTBox services, including the core ones."""
         ServicesManager._checkroot()
         subprocess.Popen(
-            ['/usr/bin/service', 'cstbox', 'restart'],
+            [os.path.join(ServicesManager.INIT_SCRIPTS_DIR, 'cstbox'), 'restart'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
