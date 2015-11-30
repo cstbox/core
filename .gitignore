@@ -15,3 +15,4 @@ deprecated/
 *-files.txt
 RELEASE-VERSION
 
+DEBIAN/control
