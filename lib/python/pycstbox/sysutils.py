@@ -18,8 +18,6 @@
 
 """ CSTBox system level utilities. """
 
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-
 import os
 import re
 import subprocess
@@ -27,8 +25,12 @@ from collections import namedtuple
 import datetime
 import pytz
 import socket
+import json
 
 import pycstbox.log as log
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
+
 _logger = log.getLogger('sysutils')
 
 ISO_DATE_FORMAT = "%Y-%m-%d"
@@ -506,34 +508,31 @@ class ServicesManager(object):
         self._start_stop_service(svc_name, 'restart')
 
     @staticmethod
+    def _issue_command(command):
+        ServicesManager._checkroot()
+        try:
+            subprocess.check_output(command, shell=True)
+        except subprocess.CalledProcessError as e:
+            raise ServicesManagerError(json.dumps({
+                "cmde": command,
+                "returncode": e.returncode,
+                "ouput": e.output
+            }))
+
+    @staticmethod
     def application_layer_restart():
         """ Restarts only the application layer services."""
-        ServicesManager._checkroot()
-        subprocess.Popen(
-            [os.path.join(ServicesManager.INIT_SCRIPTS_DIR, 'cstbox'), 'restart', '--applayer'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        ServicesManager._issue_command("%s restart --applayer" % os.path.join(ServicesManager.INIT_SCRIPTS_DIR, 'cstbox'))
 
     @staticmethod
     def cstbox_restart():
         """ Restarts all CSTBox services, including the core ones."""
-        ServicesManager._checkroot()
-        subprocess.Popen(
-            [os.path.join(ServicesManager.INIT_SCRIPTS_DIR, 'cstbox'), 'restart'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        ServicesManager._issue_command("%s restart" % os.path.join(ServicesManager.INIT_SCRIPTS_DIR, 'cstbox'))
 
     @staticmethod
     def system_reboot():
         """ Reboots the whole Linux system."""
-        ServicesManager._checkroot()
-        subprocess.Popen(
-            ['/sbin/reboot', 'now'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        ServicesManager._issue_command("/sbin/reboot now")
 
 
 def get_services_manager():
