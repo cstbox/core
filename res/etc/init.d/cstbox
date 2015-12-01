@@ -70,6 +70,14 @@ cleanup() {
     rm -f $TMP_SVC_LIST $TMP_DUMMY
 }
 
+service() {
+    if [ -x "/usr/bin/service" ] ; then
+        /usr/bin/service $svc start
+    else
+        /etc/init.d/$1 $2
+    fi
+}
+
 do_start() {
     $SYSLOG "start sequence initiated"
 
