@@ -341,7 +341,7 @@ class Metadata(object):
         """ Internal method returning the full path of the file containing the metadata for
         a given fully qualified device type.
 
-        :param str fqdt:
+        :param str or tuple fqdt:
             Fully qualified device type, which can be either :
             - a string in which the coordinator type and the device type are joined by
             a colon (ex: 'x2d:minicox')
@@ -405,7 +405,7 @@ class Metadata(object):
     def device(fqdt):
         """ Returns the metadata for a given device.
 
-        :param str fqdt:
+        :param str or tuple fqdt:
             fully qualified device type
             (see ``_device_path`` documentation for details)
 
