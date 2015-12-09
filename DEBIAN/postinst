@@ -41,7 +41,7 @@ fi
 
 # Note that since individual services are in the init.d directory, it will
 # still be possible to start/stop them individually, but they are not included
-# explicitely in the startup sequence.
+# explicitly in the startup sequence.
 # This is done this way so that services added by extension packages are 
 # automatically integrated in the start/stop process, thanks to the automatic 
 # discovery executed each time the "service cstbox start/stop" command is executed.
@@ -52,7 +52,7 @@ update-rc.d cstbox defaults > /dev/null
 # Start it now if requested
 echo "Auto start option set to : $AUTO_START"
 if [ "$AUTO_START" == "1" ] ; then
-    service cstbox start
+    /etc/init.d/cstbox start
 else
     echo "[W] enter 'service cstbox start' as root to start CSTBox framework."
 fi
