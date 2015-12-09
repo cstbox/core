@@ -10,7 +10,7 @@ AUTO_START=${AUTO_START:=0}
 echo "Adding static mapping of USB ports..."
 
 UDEV_RULES_TARGET="/etc/udev/rules.d/70-persistent-usb.rules"
-UDEV_RULES_LIB="$CSTBOX_HOME/lib/udev-rules.d"
+UDEV_RULES_LIB="$CSTBOX_HOME/lib/udev.d"
 UDEV_RULES_EMPTY="$UDEV_RULES_LIB/empty.rules"
 
 DMIDECODE=$(whereis -b dmidecode | cut -d: -f2 | tr -d ' ')
