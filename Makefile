@@ -51,7 +51,7 @@ copy_files: \
 
 	$(RSYNC) \
 	    --filter "-s_*/.*" \
-	    $(LIB_FROM)/udev.d/ $(BUILD_DIR)/$(UDEV_RULES_DIR)
+	    $(LIB_FROM)/udev-rules.d/ $(BUILD_DIR)/$(UDEV_RULES_DIR)
 
 	$(RSYNC) \
 	    --filter "-s_*/.*" \
