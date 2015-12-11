@@ -398,7 +398,7 @@ class _PollingThread(threading.Thread, Loggable):
         # retrieve the delay between successive polls, if configured
         coord_cfg = self._owner.cfg
         try:
-            poll_delay = coord_cfg.poll_delay
+            poll_delay = parse_period(coord_cfg.poll_delay)
             self.log_info('polling pace delay set to %.1f', poll_delay)
         except AttributeError:
             poll_delay = 0
