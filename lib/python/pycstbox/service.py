@@ -70,9 +70,10 @@ class ServiceContainer(Loggable):
             )
         svc.start()
 
-    Since automatic framework service object has been used (default),
-    it is then possible possible to send to fr.cstb.cstbox.my_service a
-    a method call message to framework.terminate
+    If automatic framework service object creation option is used (default),
+    an addition service object is created for implementing the framework level interface,
+    which includes the method ``terminate``. It is then possible to send to fr.cstb.cstbox.my_service a
+    a method call message to framework.terminate for stopping the service.
     """
 
     def __init__(self, name, conn=None, svc_objects=None, auto_fw_object=True):

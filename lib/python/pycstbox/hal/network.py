@@ -132,14 +132,16 @@ DeviceListEntry = namedtuple('DeviceListEntry', ['id_', 'cfg', 'haldev'])
 :key haldev: the instance of HalDevice implementing the abstraction for the device
 """
 
-PollTask = namedtuple('PollTask', ['dev', 'period'])
+PollTask = namedtuple('PollTask', ['dev', 'period', 'pause'])
 """ Named tuple describing a polling task for a given device.
 
 :key dev: the instance of the related device
 :key period: the polling period (in seconds)
+:key pause: the optional pause (in seconds) after the poll is done
 """
 
 DFLT_POLL_PERIOD = 1    # secs
+DFLT_POLL_PAUSE = 0
 DEFAULT_EVENTS_MAX_AGE = 2 * 3600   # 2 hours
 
 
@@ -252,6 +254,8 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
                         "unexpected error while creating hw device instance: %s", e
                     )
                 else:
+                    if isinstance(haldev, Loggable):
+                        haldev.log_setLevel(self.log_getEffectiveLevel())
                     devices[id_] = DeviceListEntry(id_, cfg_dev, haldev)
 
             else:
@@ -284,40 +288,40 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         # List items are tuples composed of :
         # - the device to be polled
         # - the polling period of the device
+        # - the optional pause after polling
         # The list is sorted by increasing periods
         sched_tasks = []
+
+        def get_duration_setting(name, default_value):
+            try:
+                s = getattr(dev.cfg, name).lower()
+            except AttributeError:
+                self.log_info('- no settings found for "%s" -> defaulted to %s', name, default_value)
+                return default_value
+            else:
+                self.log_info('- settings found for "%s" : %s', name, s)
+                try:
+                    return parse_period(s)
+                except ValueError:
+                    self.log_error('- invalid value (%s) for "%s" -> defaulted to %s', s, name, default_value)
+                    return default_value
+
         for dev in self._devices.itervalues():
             self.log_info(
                 'processing polling settings for device : %s' % dev.id_
             )
             if dev.haldev.is_pollable():
-                period = None
-                try:
-                    s = dev.cfg.polling.lower()
-                except AttributeError:
-                    self.log_info('- no settings found')
-                else:
-                    self.log_info('- found settings : %s' %s)
+                period = get_duration_setting('polling', DFLT_POLL_PERIOD)
+                pause = get_duration_setting('pause', DFLT_POLL_PAUSE)
 
-                    try:
-                        period = parse_period(s)
-                    except ValueError:
-                        self.log_error('- invalid polling period : %s' % s)
-
-                if not period:
-                    period = DFLT_POLL_PERIOD
-                    self.log_warning(
-                        '- using default polling period (%ds)' % period
-                    )
-
-                sched_tasks.append(PollTask(dev, period))
+                sched_tasks.append(PollTask(dev, period, pause))
 
             else:
                 self.log_info('- not a polled device')
 
         if sched_tasks:
             # Sort the list
-            sched_tasks.sort(cmp=lambda x, y : x.period - y.period)
+            sched_tasks.sort(cmp=lambda x, y: x.period - y.period)
 
             # Start the scheduler worker task
             self._polling_thread = _PollingThread(
@@ -361,7 +365,7 @@ Schedule = namedtuple('Schedule', ['when', 'task'])
 
 class _PollingThread(threading.Thread, Loggable):
     """ Thread managing devices polling."""
-    DFLT_TIME_CHECKING_PERIOD = 1
+    DFLT_TASK_CHECKING_PERIOD = 1
 
     def __init__(self, owner, tasks):
         """
@@ -373,13 +377,13 @@ class _PollingThread(threading.Thread, Loggable):
         self._owner = owner
         self._tasks = tasks
         self._terminate = False
-        self._period = self.DFLT_TIME_CHECKING_PERIOD
+        self._task_trigger_checking_period = self.DFLT_TASK_CHECKING_PERIOD
 
         Loggable.__init__(self, logname='Poll:%s' % self._owner.coordinator_id)
 
     @property
     def period(self):
-        return self._period
+        return self._task_trigger_checking_period
 
     def run(self):  #pylint: disable=R0912
         """  Enqueues and activates tasks based on their periods.
@@ -390,6 +394,15 @@ class _PollingThread(threading.Thread, Loggable):
          """
         if not self._tasks:
             raise PollingThreadError('empty task list')
+
+        # retrieve the delay between successive polls, if configured
+        coord_cfg = self._owner.cfg
+        try:
+            poll_delay = coord_cfg.poll_delay
+            self.log_info('polling pace delay set to %.1f', poll_delay)
+        except AttributeError:
+            poll_delay = 0
+            self.log_warn("no polling pace delay")
 
         sched_queue = []
 
@@ -424,7 +437,7 @@ class _PollingThread(threading.Thread, Loggable):
                 if self._terminate:
                     break
 
-                dev, period = task
+                dev, period, pause = task
                 dev_id = dev.id_
 
                 # logs the polling operation in an optimized way, so that not
@@ -491,20 +504,27 @@ class _PollingThread(threading.Thread, Loggable):
                 del sched_queue[0]
                 at(next_time, task)
 
+                # if we need to keep a cool pace, wait a bit before polling next guy
+                pause = max(pause, poll_delay)
+                if pause:
+                    time.sleep(pause)
+
             # wait until next checking, if we have not been requested to
             # terminate meanwhile
             if self._terminate:
                 break
 
-            delay = now + self._period - time.time()
+            delay = now + self._task_trigger_checking_period - time.time()
             if delay > 0:
                 time.sleep(delay)
 
             else:
-                self._period += 1
+                # adjust the task trigger checking period, in case we observed
+                # that the tasks to be done require more time
+                self._task_trigger_checking_period += 1
                 self.log_warning(
-                    'time checking period too short. Extending it to %d secs'
-                    % self._period
+                    'time checking period too short. Extending it to %d secs',
+                    self._task_trigger_checking_period
                 )
 
         self.log_info('terminated')
