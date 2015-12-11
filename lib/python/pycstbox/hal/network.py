@@ -399,7 +399,7 @@ class _PollingThread(threading.Thread, Loggable):
         coord_cfg = self._owner.cfg
         try:
             poll_delay = parse_period(coord_cfg.poll_delay)
-            self.log_info('polling pace delay set to %.1f', poll_delay)
+            self.log_info('polling pace delay set to %.1fs', poll_delay)
         except AttributeError:
             poll_delay = 0
             self.log_warn("no polling pace delay")
@@ -507,6 +507,7 @@ class _PollingThread(threading.Thread, Loggable):
                 # if we need to keep a cool pace, wait a bit before polling next guy
                 pause = max(pause, poll_delay)
                 if pause:
+                    self.log_debug('polling pace pause (%.1f)...', pause)
                     time.sleep(pause)
 
             # wait until next checking, if we have not been requested to
