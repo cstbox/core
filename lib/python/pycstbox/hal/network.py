@@ -49,7 +49,7 @@ from pycstbox.hal import HalError
 from pycstbox.log import Loggable
 from pycstbox.hal.device import PollingError
 from pycstbox.hal.device import log_setLevel as haldev_log_setLevel
-from pycstbox.devcfg import Metadata
+from pycstbox.devcfg import Metadata, ConfigurationParms
 
 OBJECT_PATH = "/service"
 
@@ -132,16 +132,15 @@ DeviceListEntry = namedtuple('DeviceListEntry', ['id_', 'cfg', 'haldev'])
 :key haldev: the instance of HalDevice implementing the abstraction for the device
 """
 
-PollTask = namedtuple('PollTask', ['dev', 'period', 'pause'])
+PollTask = namedtuple('PollTask', ['dev', 'period'])
 """ Named tuple describing a polling task for a given device.
 
 :key dev: the instance of the related device
 :key period: the polling period (in seconds)
-:key pause: the optional pause (in seconds) after the poll is done
 """
 
 DFLT_POLL_PERIOD = 1    # secs
-DFLT_POLL_PAUSE = 0
+DFLT_POLL_REQ_INTERVAL = 0
 DEFAULT_EVENTS_MAX_AGE = 2 * 3600   # 2 hours
 
 
@@ -171,6 +170,7 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         self._cfg = None
         self._evtmgr = None
         self._polling_thread = None
+        self._poll_req_interval = None
         self._devices = {}
 
         Loggable.__init__(self, logname='%s' % str(self))
@@ -178,6 +178,10 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
     @property
     def coordinator_id(self):
         return self._cid
+
+    @property
+    def poll_req_interval(self):
+        return self._poll_req_interval
 
     def __str__(self):
         return 'SO:' + self._cid
@@ -216,11 +220,20 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
     def _configure_coordinator(self, cfg):
         """ Process the configuration of the coordinator itself if needed.
 
-        The default implementation does nothing.
+        .. WARNING::
+
+            Do not forget to invoke ``super`` in overridden versions.
 
         :param dict cfg: coordinator's configuration data (included attached devices list)
         """
-        pass
+        # retrieve the delay between successive polls, if configured
+        self._poll_req_interval = parse_period(
+                getattr(cfg, ConfigurationParms.POLL_REQUESTS_INTERVAL, DFLT_POLL_REQ_INTERVAL)
+        )
+        if self._poll_req_interval:
+            self.log_info('polling pace delay set to %.1fs', self._poll_req_interval)
+        else:
+            self.log_warn("no polling request interval specified")
 
     def _configure_devices(self, cfg):
         """ Load the configuration of the devices connected to this
@@ -232,7 +245,7 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         configuration data and the class modeling it.
 
         :param dict cfg: coordinator's attached devices configuration (keyed by the device ids)
-        :returns: the dictionary of device asbtraction object instances, keyed by device ids
+        :returns: the dictionary of device abstraction object instances, keyed by device ids
         """
         devices = {}
         devclasses = get_hal_device_classes()
@@ -311,10 +324,12 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
                 'processing polling settings for device : %s' % dev.id_
             )
             if dev.haldev.is_pollable():
-                period = get_duration_setting('polling', DFLT_POLL_PERIOD)
-                pause = get_duration_setting('pause', DFLT_POLL_PAUSE)
+                period = get_duration_setting(ConfigurationParms.POLL_PERIOD, DFLT_POLL_PERIOD)
 
-                sched_tasks.append(PollTask(dev, period, pause))
+                # set the device poll request interval in case it uses multiple low level requests
+                dev.haldev.poll_req_interval = self._poll_req_interval
+
+                sched_tasks.append(PollTask(dev, period))
 
             else:
                 self.log_info('- not a polled device')
@@ -395,16 +410,8 @@ class _PollingThread(threading.Thread, Loggable):
         if not self._tasks:
             raise PollingThreadError('empty task list')
 
-        # retrieve the delay between successive polls, if configured
-        coord_cfg = self._owner.cfg
-        try:
-            poll_delay = parse_period(coord_cfg.poll_delay)
-            self.log_info('polling pace delay set to %.1fs', poll_delay)
-        except AttributeError:
-            poll_delay = 0
-            self.log_warn("no polling pace delay")
-
         sched_queue = []
+        poll_req_interval = self._owner.poll_req_interval
 
         def at(_when, _task):
             """ Mimics the system `at` command to schedule an action at a future time
@@ -437,7 +444,7 @@ class _PollingThread(threading.Thread, Loggable):
                 if self._terminate:
                     break
 
-                dev, period, pause = task
+                dev, period = task
                 dev_id = dev.id_
 
                 # logs the polling operation in an optimized way, so that not
@@ -504,11 +511,10 @@ class _PollingThread(threading.Thread, Loggable):
                 del sched_queue[0]
                 at(next_time, task)
 
-                # if we need to keep a cool pace, wait a bit before polling next guy
-                pause = max(pause, poll_delay)
-                if pause:
-                    self.log_debug('polling pace pause (%.1f)...', pause)
-                    time.sleep(pause)
+                # if the we need to calm down successive low level requests, wait a bit before polling next guy
+                if poll_req_interval:
+                    self.log_debug('polling pace pause (%.1fs)...', poll_req_interval)
+                    time.sleep(poll_req_interval)
 
             # wait until next checking, if we have not been requested to
             # terminate meanwhile
