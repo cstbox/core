@@ -32,6 +32,33 @@ DEFAULT_PATH = '/etc/cstbox/devices.cfg'
 METADATA_HOME = os.path.join(os.path.dirname(__file__), "devcfg.d")
 
 
+class ConfigurationParms(object):
+    """ Names of the parameters used in the configuration file.
+    """
+    COORDINATORS_SECTION = 'coordinators'
+    COORDINATOR_PORT = 'port'
+
+    DEVICES_SECTION = 'devices'
+
+    DEVICE_ROOT_SECTION = 'root'
+    DEVICE_OUTPUTS_SECTION = 'outputs'
+    DEVICE_INPUTS_SECTION = 'inputs'
+    DEVICE_CONTROLS_SECTION = 'controls'
+
+    PROPERTY_DEFINITIONS = 'pdefs'
+
+    ENABLED = 'enabled'
+    VAR_NAME = 'varname'
+    ADDRESS = 'address'
+    TYPE = 'type'
+    DELTA_MIN = 'delta_min'
+    POLL_PERIOD = 'polling'
+    POLL_REQUESTS_INTERVAL = 'poll_req_interval'
+    LOCATION = 'location'
+    EVENTS_TTL = 'events_ttl'
+    DEFAULT_VALUE = 'defvalue'
+
+
 class DeviceNetworkConfiguration(dict):
     """ Abstraction class providing the access to the devices network
     configuration data.
@@ -146,18 +173,18 @@ class DeviceNetworkConfiguration(dict):
 
         # load configuration global attributes (ie those not keyed by
         # "coordinators")
-        for k, v in [(k, v) for (k, v) in cfg.iteritems() if k != 'coordinators']:
+        for k, v in [(k, v) for (k, v) in cfg.iteritems() if k != ConfigurationParms.COORDINATORS_SECTION]:
             setattr(self, k, v)
 
         # load the coordinators
-        for cid, cdata in cfg['coordinators'].iteritems():
+        for cid, cdata in cfg[ConfigurationParms.COORDINATORS_SECTION].iteritems():
             # instantiate a coordinator, passing it all the extra attributes
             # stored in the configuration if any
-            attrs = dict([(k, v) for k, v in cdata.iteritems() if k != 'devices'])
+            attrs = dict([(k, v) for k, v in cdata.iteritems() if k != ConfigurationParms.DEVICES_SECTION])
             coord = Coordinator(cid, **attrs)   #pylint: disable=W0142
 
             # load the devices attached to the coordinator
-            devices = cdata['devices']
+            devices = cdata[ConfigurationParms.DEVICES_SECTION]
             for did, ddata in devices.iteritems():
                 d = Device(did, **ddata)        #pylint: disable=W0142
                 coord.add_device(d)
@@ -177,7 +204,7 @@ class DeviceNetworkConfiguration(dict):
         return json.dumps(dict(
             [(k, v) for (k, v) in self.__dict__.iteritems() if not k.startswith('_')] +
             [
-                ('coordinators', dict([(uid, c.js_dict()) for (uid, c) in self.iteritems()]))
+                (ConfigurationParms.COORDINATORS_SECTION, dict([(uid, c.js_dict()) for (uid, c) in self.iteritems()]))
             ]
         ), indent=(4 if formatted else 0))
 
@@ -558,14 +585,14 @@ class Coordinator(DevCfgObject, dict):
     def js_dict(self):
         d = self.js_ownprops_dict()
         d.update(dict([
-            ('devices', dict([(uid, dev.js_dict())
+            (ConfigurationParms.DEVICES_SECTION, dict([(uid, dev.js_dict())
                               for (uid, dev) in self.iteritems()]))
         ]))
         return d
 
     def js_ownprops_dict(self):
         return dict([(k, v) for (k, v) in self.__dict__.iteritems()
-                     if k not in self._transients + ['devices']])
+                     if k not in self._transients + [ConfigurationParms.DEVICES_SECTION]])
 
 
 class Device(DevCfgObject):
@@ -580,7 +607,11 @@ class Device(DevCfgObject):
     - location
     """
     #    _transients = []
-    _required_attrs = DevCfgObject._required_attrs + ['address', 'type', 'location']
+    _required_attrs = DevCfgObject._required_attrs + [
+        ConfigurationParms.ADDRESS,
+        ConfigurationParms.TYPE,
+        ConfigurationParms.LOCATION
+    ]
 
     address = None
     type = None
@@ -602,16 +633,16 @@ class Device(DevCfgObject):
 
         # add specific properties and end-points defined in the metadata,
         # if any, when the device type has been provided
-        if 'type' in kwargs:
-            dev_type = kwargs['type']
-            pdefs = Metadata.device(dev_type)['pdefs']
+        if ConfigurationParms.TYPE in kwargs:
+            dev_type = kwargs[ConfigurationParms.TYPE]
+            pdefs = Metadata.device(dev_type)[ConfigurationParms.PROPERTY_DEFINITIONS]
 
             for k, v in ((k, v)
-                         for k, v in pdefs['root'].iteritems()
+                         for k, v in pdefs[ConfigurationParms.DEVICE_ROOT_SECTION].iteritems()
                          if not k.startswith('__')):
-                setattr(self, k, v.get('defvalue', ''))
+                setattr(self, k, v.get(ConfigurationParms.DEFAULT_VALUE, ''))
 
-            for endpt in ('outputs', 'controls'):
+            for endpt in (ConfigurationParms.DEVICE_OUTPUTS_SECTION, ConfigurationParms.DEVICE_CONTROLS_SECTION):
                 try:
                     outputs_defs = pdefs[endpt]
                 except KeyError:
