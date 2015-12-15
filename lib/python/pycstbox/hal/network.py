@@ -530,15 +530,6 @@ class _PollingThread(threading.Thread, Loggable):
             if remaining_delay > 0:
                 time.sleep(remaining_delay)
 
-            else:
-                # adjust the task trigger checking period, in case we observed
-                # that the tasks to be done require more time
-                self._task_trigger_checking_period = int(math.ceil(elapsed))
-                self.log_warning(
-                    'time checking period too short. Extending it to %d secs',
-                    self._task_trigger_checking_period
-                )
-
         self.log_info('terminated')
 
     def terminate(self):
