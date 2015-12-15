@@ -37,6 +37,7 @@ import threading
 import time
 from collections import namedtuple
 import json
+import math
 
 import dbus.service
 from dbus.exceptions import DBusException
@@ -195,6 +196,8 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         Loggable.log_setLevel(self, level)
         if self._polling_thread:
             self._polling_thread.log_setLevel(level)
+        for haldev in (e.haldev for e in self._devices.itervalues() if isinstance(e.haldev, Loggable)):
+            haldev.log_setLevel(self.log_getEffectiveLevel())
 
     def load_configuration(self, cfg):
         """ Process the configuration data related to the coordinator and
@@ -231,7 +234,7 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
                 getattr(cfg, ConfigurationParms.POLL_REQUESTS_INTERVAL, DFLT_POLL_REQ_INTERVAL)
         )
         if self._poll_req_interval:
-            self.log_info('polling pace delay set to %.1fs', self._poll_req_interval)
+            self.log_info('polling request interval set to %.1fs', self._poll_req_interval)
         else:
             self.log_warn("no polling request interval specified")
 
@@ -267,8 +270,10 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
                         "unexpected error while creating hw device instance: %s", e
                     )
                 else:
-                    if isinstance(haldev, Loggable):
-                        haldev.log_setLevel(self.log_getEffectiveLevel())
+                    hw_dev = haldev._hwdev
+                    if isinstance(hw_dev, Loggable):
+                        hw_dev.log_setLevel(self.log_getEffectiveLevel())
+                    hw_dev.poll_req_interval = self._poll_req_interval
                     devices[id_] = DeviceListEntry(id_, cfg_dev, haldev)
 
             else:
@@ -301,7 +306,6 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         # List items are tuples composed of :
         # - the device to be polled
         # - the polling period of the device
-        # - the optional pause after polling
         # The list is sorted by increasing periods
         sched_tasks = []
 
@@ -437,8 +441,8 @@ class _PollingThread(threading.Thread, Loggable):
         polled_devs = []
         no_error = (0, 0)
         while not self._terminate:
-            now = time.time()
-            for task in [task for (when, task) in sched_queue if when <= now]:
+            polling_start_time = time.time()
+            for task in [task for (when, task) in sched_queue if when <= polling_start_time]:
                 # check terminate flag as frequently a possible, since some devices can take a
                 # while to be polled, and we can have a lot of polls to be done here
                 if self._terminate:
@@ -507,13 +511,13 @@ class _PollingThread(threading.Thread, Loggable):
                             self.log_exception(e)
 
                 # re-schedule this task
-                next_time = now + period
+                next_time = polling_start_time + period
                 del sched_queue[0]
                 at(next_time, task)
 
                 # if the we need to calm down successive low level requests, wait a bit before polling next guy
                 if poll_req_interval:
-                    self.log_debug('polling pace pause (%.1fs)...', poll_req_interval)
+                    self.log_debug('pausing %.1fs before next request...', poll_req_interval)
                     time.sleep(poll_req_interval)
 
             # wait until next checking, if we have not been requested to
@@ -521,14 +525,15 @@ class _PollingThread(threading.Thread, Loggable):
             if self._terminate:
                 break
 
-            delay = now + self._task_trigger_checking_period - time.time()
-            if delay > 0:
-                time.sleep(delay)
+            elapsed = time.time() - polling_start_time
+            remaining_delay = self._task_trigger_checking_period - elapsed
+            if remaining_delay > 0:
+                time.sleep(remaining_delay)
 
             else:
                 # adjust the task trigger checking period, in case we observed
                 # that the tasks to be done require more time
-                self._task_trigger_checking_period += 1
+                self._task_trigger_checking_period = int(math.ceil(elapsed))
                 self.log_warning(
                     'time checking period too short. Extending it to %d secs',
                     self._task_trigger_checking_period
