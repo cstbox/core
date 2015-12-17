@@ -215,10 +215,8 @@ class PolledDevice(HalDevice):  #pylint: disable=W0223
         low-level interactions with the equipment. This connection is established by initializing
         the private attribute ``_hwdev`` with and instance of an object implementing a ``poll`
         method.
-        Proper
-        initialization is
-        checked at first poll time,
-        and the device will be tagged as invalid (and will be no more polled) if not compliant.
+        Proper initialization is checked at first poll time, and the device will be tagged as invalid
+        (and will be no more polled) if not compliant.
     """
 
     def __init__(self, coord, cfg):
@@ -256,11 +254,19 @@ class PolledDevice(HalDevice):  #pylint: disable=W0223
             raise PollingError(self._cfg.uid, e)
 
         else:
-            # build the corresponding event list
+            if output_values:
+                # build the corresponding event list
 
-            # emit events for all enabled outputs for which the value has changed
-            # since last time
-            return self.create_events(output_values)
+                # emit events for all enabled outputs for which the value has changed
+                # since last time
+                return self.create_events(output_values)
+            else:
+                return []
+
+    def terminate(self):
+        """ Sends a termination signal to the device, to let it gently stops if needed
+        """
+        self._hwdev.terminate = True
 
 
 class PollingError(Exception):

@@ -115,6 +115,7 @@ class DeviceNetworkSvc(ServiceContainer):
             if cfg_coord.type in self._coord_types
         ]:
             coord_class = self._coord_types[cfg_coord.type]
+            self.log_info('creating coordinator id=%s class=%s', cid, coord_class)
             so = coord_class(cid)
             so.log_setLevel(self.log_getEffectiveLevel())
             so.load_configuration(cfg_coord)
@@ -362,6 +363,12 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         """
         if self._polling_thread:
             self._polling_thread.terminate()
+
+            # signal to polled devices that they have to stop (some of them can loop over sub-polling)
+            for haldev in (dev.haldev for dev in self._devices.itervalues() if dev.haldev.is_pollable()):
+                self.log_info('sending termination signal to device %s', haldev)
+                haldev.terminate()
+
             self._polling_thread.join(self._polling_thread.period * 2)
             self._evtmgr = None
             self.log_info('stopped')
