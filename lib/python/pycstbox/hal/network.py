@@ -446,7 +446,6 @@ class _PollingThread(threading.Thread, Loggable):
         self.log_info('entering run loop')
         self._terminate = False
         dev_stats = {}
-        # dev_errcnt = {}
         polled_devs = []
         empty_stats = (0, 0, 0, False)
         while not self._terminate:
@@ -485,7 +484,7 @@ class _PollingThread(threading.Thread, Loggable):
                             'duplicated errors will not be reported any more for device %s',
                             dev_id
                         )
-                    dev_stats[dev_id] = (total_reqs, poll_errs, crc_errs, True)
+                    in_error = True
 
                 except (ValueError, TypeError) as e:
                     crc_errs += 1
@@ -499,14 +498,14 @@ class _PollingThread(threading.Thread, Loggable):
                             'duplicated errors will not be reported any more for device %s',
                             dev_id
                         )
-                    dev_stats[dev_id] = (total_reqs, poll_errs, crc_errs, True)
+                    in_error = True
 
                 else:
                     if in_error:
                         self.log_info(
                             'communication restored with device %s', dev_id
                         )
-                        dev_stats[dev_id] = (total_reqs, poll_errs, crc_errs, False)
+                        in_error = False
 
                     try:
                         for evt in events:
@@ -520,6 +519,7 @@ class _PollingThread(threading.Thread, Loggable):
                         if not self._terminate:
                             self.log_exception(e)
 
+                dev_stats[dev_id] = (total_reqs, poll_errs, crc_errs, in_error)
                 if total_reqs % self.STATS_INTERVAL == 0:
                     self.log_info(
                             '%s traffic stats: reqs=%d reads=%d errs=%d error=%s',
