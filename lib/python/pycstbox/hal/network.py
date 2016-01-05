@@ -392,6 +392,7 @@ Schedule = namedtuple('Schedule', ['when', 'task'])
 class _PollingThread(threading.Thread, Loggable):
     """ Thread managing devices polling."""
     DFLT_TASK_CHECKING_PERIOD = 1
+    STATS_INTERVAL = 100
 
     def __init__(self, owner, tasks):
         """
@@ -444,9 +445,10 @@ class _PollingThread(threading.Thread, Loggable):
         # scheduling queue
         self.log_info('entering run loop')
         self._terminate = False
-        dev_errcnt = {}
+        dev_stats = {}
+        # dev_errcnt = {}
         polled_devs = []
-        no_error = (0, 0)
+        empty_stats = (0, 0, 0, False)
         while not self._terminate:
             polling_start_time = time.time()
             for task in [task for (when, task) in sched_queue if when <= polling_start_time]:
@@ -466,11 +468,12 @@ class _PollingThread(threading.Thread, Loggable):
                 else:
                     self.log_debug('polling device %s', dev_id)
 
-                poll_errs, crc_errs = dev_errcnt.get(dev_id, no_error)
+                total_reqs, poll_errs, crc_errs, in_error = dev_stats.get(dev_id, empty_stats)
                 try:
                     # requests the device driver to execute the polling procedure
                     # and return us the list of events corresponding to the reply
                     # received in return
+                    total_reqs += 1
                     events = dev.haldev.poll()
 
                 except PollingError as e:
@@ -482,7 +485,7 @@ class _PollingThread(threading.Thread, Loggable):
                             'duplicated errors will not be reported any more for device %s',
                             dev_id
                         )
-                    dev_errcnt[dev_id] = (poll_errs, crc_errs)
+                    dev_stats[dev_id] = (total_reqs, poll_errs, crc_errs, True)
 
                 except (ValueError, TypeError) as e:
                     crc_errs += 1
@@ -496,14 +499,14 @@ class _PollingThread(threading.Thread, Loggable):
                             'duplicated errors will not be reported any more for device %s',
                             dev_id
                         )
-                    dev_errcnt[dev_id] = (poll_errs, crc_errs)
+                    dev_stats[dev_id] = (total_reqs, poll_errs, crc_errs, True)
 
                 else:
-                    if dev_id in dev_errcnt:
+                    if in_error:
                         self.log_info(
                             'communication restored with device %s', dev_id
                         )
-                        del dev_errcnt[dev_id]
+                        dev_stats[dev_id] = (total_reqs, poll_errs, crc_errs, False)
 
                     try:
                         for evt in events:
@@ -516,6 +519,12 @@ class _PollingThread(threading.Thread, Loggable):
                     except DBusException as e:
                         if not self._terminate:
                             self.log_exception(e)
+
+                if total_reqs % self.STATS_INTERVAL == 0:
+                    self.log_info(
+                            '%s traffic stats: reqs=%d reads=%d errs=%d error=%s',
+                            dev_id, total_reqs, poll_errs, crc_errs, in_error
+                    )
 
                 # re-schedule this task
                 next_time = polling_start_time + period
