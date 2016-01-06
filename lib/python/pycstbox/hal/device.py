@@ -251,7 +251,7 @@ class PolledDevice(HalDevice):  #pylint: disable=W0223
             _logger.debug("dev=%s outputs=%s", self._cfg.uid, output_values)
 
         except IOError as e:
-            raise PollingError(self._cfg.uid, e)
+            raise CommunicationError(self._cfg.uid, e)
 
         else:
             if output_values:
@@ -277,7 +277,13 @@ class PollingError(Exception):
         :param str dev_id: id of the device being polled
         :param Exception error: reported error
         """
-        super(PollingError, self).__init__(
-            'polling error on device %s : %s' % (dev_id, error.message)
-        )
         self.dev_id, self.error = dev_id, error
+        super(PollingError, self).__init__(self._get_message())
+
+    def _get_message(self):
+        return 'polling error on device %s : %s' % (self.dev_id, self.error.message)
+
+
+class CommunicationError(PollingError):
+    def _get_message(self):
+        return 'communication error with device %s' % self.dev_id

@@ -48,7 +48,7 @@ import pycstbox.evtmgr
 from pycstbox.hal.drivers import get_hal_device_classes
 from pycstbox.hal import HalError
 from pycstbox.log import Loggable
-from pycstbox.hal.device import PollingError
+from pycstbox.hal.device import CommunicationError
 from pycstbox.hal.device import log_setLevel as haldev_log_setLevel
 from pycstbox.devcfg import Metadata, ConfigurationParms
 
@@ -443,11 +443,20 @@ class _PollingThread(threading.Thread, Loggable):
         # Current time is checked every second and queued tasks having
         # reached their schedule are executed, then moved to the end of the
         # scheduling queue
+
+        def report_error(_msg, _err_level):
+            if _err_level == 1:
+                self.log_error(_msg)
+            elif _err_level == 2:
+                self.log_error('(repeated) %s', _msg)
+            elif _err_level == 3:
+                self.log_error('(last report) %s', _msg)
+
         self.log_info('entering run loop')
         self._terminate = False
         dev_stats = {}
         polled_devs = []
-        empty_stats = (0, 0, 0, False)
+        empty_stats = (0, 0, 0, 0, 0, False)
         while not self._terminate:
             polling_start_time = time.time()
             for task in [task for (when, task) in sched_queue if when <= polling_start_time]:
@@ -467,37 +476,30 @@ class _PollingThread(threading.Thread, Loggable):
                 else:
                     self.log_debug('polling device %s', dev_id)
 
-                total_reqs, poll_errs, crc_errs, in_error = dev_stats.get(dev_id, empty_stats)
+                total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error = dev_stats.get(dev_id, empty_stats)
                 try:
                     # requests the device driver to execute the polling procedure
                     # and return us the list of events corresponding to the reply
                     # received in return
-                    total_reqs += 1
+                    total_poll += 1
                     events = dev.haldev.poll()
 
-                except PollingError as e:
-                    poll_errs += 1
-                    if poll_errs <= 2:
-                        self.log_error(e.message)
-                    if poll_errs == 2:
-                        self.log_warn(
-                            'duplicated errors will not be reported any more for device %s',
-                            dev_id
-                        )
+                except CommunicationError as e:
+                    comm_errs += 1
+                    err_level += 1
+                    report_error(e.message, err_level)
                     in_error = True
 
-                except (ValueError, TypeError) as e:
+                except ValueError as e:
                     crc_errs += 1
-                    if crc_errs <= 2:
-                        self.log_error(
-                            'unexpected polling error on device %s', dev_id
-                        )
-                        self.log_exception(e)
-                    if crc_errs == 2:
-                        self.log_warn(
-                            'duplicated errors will not be reported any more for device %s',
-                            dev_id
-                        )
+                    err_level += 1
+                    report_error('CRC error on device %s' % dev_id, err_level)
+                    in_error = True
+
+                except TypeError as e:
+                    unexp_errs += 1
+                    err_level += 1
+                    report_error('unexpected error on device %s (%s)' % (dev_id, e.message), err_level)
                     in_error = True
 
                 else:
@@ -506,6 +508,7 @@ class _PollingThread(threading.Thread, Loggable):
                             'communication restored with device %s', dev_id
                         )
                         in_error = False
+                        err_level = 0
 
                     try:
                         for evt in events:
@@ -519,11 +522,11 @@ class _PollingThread(threading.Thread, Loggable):
                         if not self._terminate:
                             self.log_exception(e)
 
-                dev_stats[dev_id] = (total_reqs, poll_errs, crc_errs, in_error)
-                if total_reqs % self.STATS_INTERVAL == 0:
+                dev_stats[dev_id] = (total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error)
+                if total_poll % self.STATS_INTERVAL == 0:
                     self.log_info(
-                            '%s traffic stats: reqs=%d reads=%d errs=%d error=%s',
-                            dev_id, total_reqs, poll_errs, crc_errs, in_error
+                            '%s traffic stats: total_polls=%d poll_errs=%d crc_errs=%d unexp_errs=%d in_error=%s',
+                            dev_id, total_poll, comm_errs, crc_errs, unexp_errs, in_error
                     )
 
                 # re-schedule this task
