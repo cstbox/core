@@ -525,18 +525,21 @@ class _PollingThread(threading.Thread, Loggable):
                 dev_stats[dev_id] = (total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error)
                 if total_poll % self.STATS_INTERVAL == 0:
                     self.log_info(
-                            '%s traffic stats: total_polls=%d poll_errs=%d crc_errs=%d unexp_errs=%d in_error=%s',
+                            '%s traffic stats: total_polls=%d comm_errs=%d crc_errs=%d unexp_errs=%d in_error=%s',
                             dev_id, total_poll, comm_errs, crc_errs, unexp_errs, in_error
                     )
 
                 # re-schedule this task
                 next_time = polling_start_time + period
+                # TODO to be reworked
+                # Works but is a bit incorrect. We are deleting the first list item, although the processed
+                # task can be elsewhere (see the if filter in the loop iterator)
                 del sched_queue[0]
                 at(next_time, task)
 
                 # if the we need to calm down successive low level requests, wait a bit before polling next guy
                 if poll_req_interval:
-                    self.log_debug('pausing %.1fs before next request...', poll_req_interval)
+                    self.log_debug('pausing %.1fs before polling next device...', poll_req_interval)
                     time.sleep(poll_req_interval)
 
             # wait until next checking, if we have not been requested to
