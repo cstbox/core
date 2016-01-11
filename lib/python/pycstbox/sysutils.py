@@ -316,6 +316,8 @@ ServiceProperties = namedtuple('ServiceProperties', 'descr core')
 Is a subset of :py:class:`ServiceInformation`
 """
 
+SystemInformation = namedtuple('SystemInformation', 'mem_usage disk_usage')
+
 
 class ServicesManager(object):
     """ Mimics what is provided by the Linux 'service' command, applied to the
@@ -598,3 +600,17 @@ def symbol_for_name(fqdn):
 
     except AttributeError:
         raise NameError("name '%s' is not defined" % fqdn)
+
+
+def get_system_info():
+    """ Returns system indicators.
+
+    :return:
+        a SystemInformation instance
+    """
+    import psutil
+    return SystemInformation(
+        psutil.virtual_memory().percent,
+        psutil.disk_usage('/')
+    )
+
