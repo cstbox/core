@@ -609,8 +609,13 @@ def get_system_info():
         a SystemInformation instance
     """
     import psutil
+    try:
+        mem_usage = psutil.virtual_memory().percent
+    except AttributeError:  # in case an older version is installed
+        mem_usage = psutil.phymem_usage().percent
+
     return SystemInformation(
-        psutil.virtual_memory().percent,
+        mem_usage,
         psutil.disk_usage('/')
     )
 
