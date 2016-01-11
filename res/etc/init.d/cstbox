@@ -72,7 +72,7 @@ cleanup() {
 
 service() {
     if [ -x "/usr/bin/service" ] ; then
-        /usr/bin/service $svc start
+        /usr/bin/service $1 $2
     else
         /etc/init.d/$1 $2
     fi
