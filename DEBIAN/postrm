@@ -2,8 +2,9 @@
 
 case "$1" in
     remove|purge)
-        rm -rf /opt/cstbox
-        rm -f /etc/init.d/cstbox-*
+        for f in cstbox cstbox-avahi-* cstbox-cfgbroker cstbox-cron cstbox-dbus cstbox-evtmgr; do
+            rm -f /etc/init.d/$f
+        done
         rm -rf /etc/cron.d/cstbox
 
         if [ "$1" = "purge" ] ; then
