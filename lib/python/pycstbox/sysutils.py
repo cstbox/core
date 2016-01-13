@@ -656,6 +656,6 @@ def get_module_versions():
     """
     versions = {}
     for f in os.listdir(CSTBOX_VERSION_DIR):
-        version = file(f).readline().strip()
+        version = file(os.path.join(CSTBOX_VERSION_DIR, f)).readline().strip()
         versions[f] = version
     return versions
