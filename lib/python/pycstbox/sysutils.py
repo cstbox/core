@@ -316,8 +316,6 @@ ServiceProperties = namedtuple('ServiceProperties', 'descr core')
 Is a subset of :py:class:`ServiceInformation`
 """
 
-SystemInformation = namedtuple('SystemInformation', 'mem_usage disk_usage')
-
 
 class ServicesManager(object):
     """ Mimics what is provided by the Linux 'service' command, applied to the
@@ -602,20 +600,42 @@ def symbol_for_name(fqdn):
         raise NameError("name '%s' is not defined" % fqdn)
 
 
+SystemInformation = namedtuple('SystemInformation', 'mem_usage disk_usage')
+
+
+class UsageStats(object):
+    def __init__(self, total, used):
+        self.total = total
+        self.used = used
+        self.free = total - used
+        self.percent = float(used) / float(total) * 100.
+
+
 def get_system_info():
     """ Returns system indicators.
+
+    Use direct system resources instead of using some cross-platform
+    module such as `psutil`. A very good module, but overkill here.
+
+    .. IMPORTANT::
+        Works on Linux only, but since CSTBox is made for Linux only,
+        this should not be a problem.
 
     :return:
         a SystemInformation instance
     """
-    import psutil
-    try:
-        mem_usage = psutil.virtual_memory().percent
-    except AttributeError:  # in case an older version is installed
-        mem_usage = psutil.phymem_usage().percent
+    statvfs = os.statvfs('/')
+    disk_total = statvfs.f_bsize * statvfs.f_blocks
+    disk_used = statvfs.f_bsize * (statvfs.f_blocks - statvfs.f_bfree)
+
+    output = subprocess.check_output('free -m', shell=True).split('\n')
+    # extract the total memory from the first stats line
+    mem_total = int(output[1].split(':')[1].split()[0])
+    # extract values from the line "-/+ buffers/cache"
+    mem_used = int(output[2].split(':')[-1].split()[0])
 
     return SystemInformation(
-        mem_usage,
-        psutil.disk_usage('/')
+        UsageStats(mem_total, mem_used),
+        UsageStats(disk_total, disk_used)
     )
 
