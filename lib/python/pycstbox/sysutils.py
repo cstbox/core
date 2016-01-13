@@ -648,6 +648,9 @@ def get_system_info():
     )
 
 
+ModuleVersion = namedtuple('ModuleVersion', 'version date')
+
+
 def get_module_versions():
     """ Returns the version of the CSTBox modules.
 
@@ -656,6 +659,12 @@ def get_module_versions():
     """
     versions = {}
     for f in os.listdir(CSTBOX_VERSION_DIR):
-        version = file(os.path.join(CSTBOX_VERSION_DIR, f)).readline().strip()
-        versions[f] = version
+        version_file_path = os.path.join(CSTBOX_VERSION_DIR, f)
+        version_info = file(version_file_path).readline().strip().split(' ', 1)
+        if len(version_info) > 1:
+            version, date = version_info
+        else:
+            version = version_info[0]
+            date = datetime.datetime.fromtimestamp(os.path.getmtime(version_file_path)).strftime("%Y-%m-%d %H:%M:%S")
+        versions[f] = ModuleVersion(version, date)
     return versions
