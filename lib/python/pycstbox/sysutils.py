@@ -38,6 +38,7 @@ ISO_DATE_FORMAT = "%Y-%m-%d"
 CSTBOX_HOME = os.environ.get('CSTBOX_HOME', '/opt/cstbox')
 CSTBOX_BIN_DIR = os.path.join(CSTBOX_HOME, 'bin')
 CSTBOX_LIB_DIR = os.path.join(CSTBOX_HOME, 'lib/python')
+CSTBOX_VERSION_DIR = os.path.join(CSTBOX_HOME, 'version')
 CSTBOX_HOSTNAME = socket.getfqdn()
 
 tz_UTC = pytz.UTC
@@ -600,7 +601,8 @@ def symbol_for_name(fqdn):
         raise NameError("name '%s' is not defined" % fqdn)
 
 
-SystemInformation = namedtuple('SystemInformation', 'mem_usage disk_usage')
+SystemInformation = namedtuple('SystemInformation', 'version mem_usage disk_usage')
+SystemVersion = namedtuple('SystemVersion', 'kernel arch')
 
 
 class UsageStats(object):
@@ -608,7 +610,7 @@ class UsageStats(object):
         self.total = total
         self.used = used
         self.free = total - used
-        self.percent = float(used) / float(total) * 100.
+        self.percent = round(float(used) / float(total) * 100., 1)
 
 
 def get_system_info():
@@ -621,12 +623,15 @@ def get_system_info():
         Works on Linux only, but since CSTBox is made for Linux only,
         this should not be a problem.
 
+    Memory and disk space are given in Mbytes. Percentages are rounded
+    to one decimal.
+
     :return:
         a SystemInformation instance
     """
     statvfs = os.statvfs('/')
-    disk_total = statvfs.f_bsize * statvfs.f_blocks
-    disk_used = statvfs.f_bsize * (statvfs.f_blocks - statvfs.f_bfree)
+    disk_total = statvfs.f_bsize * statvfs.f_blocks / 1024 / 1024
+    disk_used = statvfs.f_bsize * (statvfs.f_blocks - statvfs.f_bfree) / 1024 / 1024
 
     output = subprocess.check_output('free -m', shell=True).split('\n')
     # extract the total memory from the first stats line
@@ -634,8 +639,23 @@ def get_system_info():
     # extract values from the line "-/+ buffers/cache"
     mem_used = int(output[2].split(':')[-1].split()[0])
 
+    uname = os.uname()
+
     return SystemInformation(
+        SystemVersion(uname[2], uname[4]),
         UsageStats(mem_total, mem_used),
         UsageStats(disk_total, disk_used)
     )
 
+
+def get_module_versions():
+    """ Returns the version of the CSTBox modules.
+
+    :return: a dictionary containing the version of each installed module
+    :rtype: dict
+    """
+    versions = {}
+    for f in os.listdir(CSTBOX_VERSION_DIR):
+        version = file(f).readline().strip()
+        versions[f] = version
+    return versions
