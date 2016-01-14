@@ -422,11 +422,14 @@ class ServicesManager(object):
         """ Builds an instance of ServiceInformation named tuple, using the
         service name to retrieve the values ."""
         props = self._svcs[svc_name]
-        return ServiceInformation(
-            props.descr,
-            props.core,
-            os.path.exists(self._pidfile_of(svc_name))
-        )
+        pid_file = self._pidfile_of(svc_name)
+        if os.path.exists(pid_file):
+            pid = file(pid_file).readline().strip()
+            is_running = subprocess.call(["ps", "-p %s" % pid]) == 0
+        else:
+            is_running = False
+
+        return ServiceInformation(props.descr, props.core, is_running)
 
     def get_service_info(self, svc_name=None):
         """ Returns the information about a given service, or about all
