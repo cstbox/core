@@ -87,6 +87,7 @@ class DeviceNetworkConfiguration(dict):
         self._path = path
 
         self._logger = logger
+        self._ready = False
 
         if autoload:
             self.load()
@@ -95,6 +96,11 @@ class DeviceNetworkConfiguration(dict):
     def path(self):
         """ The path of the configuration file. """
         return self._path
+
+    @property
+    def is_ready(self):
+        """ Tells if the configuration has been loaded. """
+        return self._ready
 
     def load(self, path=None):
         """ Loads the configuration data from a file.
@@ -106,6 +112,7 @@ class DeviceNetworkConfiguration(dict):
         :raises ValueError:
             if data are not valid
         """
+        self._ready = False
 
         if not path:
             path = self._path
@@ -124,11 +131,13 @@ class DeviceNetworkConfiguration(dict):
                 raise ValueError('invalid device configuration file (%s)' % str(e))
             else:
                 self.load_dict(cfg)
+                self._ready = True
 
     def load_str(self, s):
         """ Loads the configuration date from a string containing the JSON
         serialization of the configuration.
         """
+        self._ready = False
         if not s:
             raise ValueError()
 
@@ -142,6 +151,7 @@ class DeviceNetworkConfiguration(dict):
             raise ValueError('invalid device configuration data (%s)' % str(e))
         else:
             self.load_dict(cfg)
+            self._ready = True
 
     def load_dict(self, cfg):
         """ Load the configuration data from a dictionary.
