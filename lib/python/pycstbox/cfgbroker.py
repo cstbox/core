@@ -89,12 +89,16 @@ class BrokerObject(dbus.service.Object):
         self._logger = logger
 
     @property
-    def is_ready(self):
+    def ready(self):
         """ Tells if the proxied configuration is ready to be used.
 
         :rtype: bool
         """
         return self._cfg.is_ready
+
+    @dbus.service.method(SERVICE_INTERFACE, out_signature='b')
+    def is_ready(self):
+        return self._cfg.is_ready()
 
     @dbus.service.method(SERVICE_INTERFACE, in_signature='s', out_signature='s')
     def get_coordinator(self, c_id):
