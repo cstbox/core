@@ -20,13 +20,14 @@
 context.
 """
 
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-
 import gobject
 import dbus
 import dbus.service
 import dbus.mainloop.glib
 import os
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
+
 
 # the make_bus_name() helper function uses this value to build the full
 # (public) bus name, based on a simplified one
@@ -69,14 +70,24 @@ def get_object(svc_name, obj_path):
 
 def make_bus_name(short_name):
     """ Returns a consistent bus name (well-known name), based on the short
-    one (ie the last part) """
+    one (ie the last part).
+
+    Returns the original value if already prefixed.
+    """
     assert short_name, 'short_name cannot be None or empty'
+    if short_name.startswith(WKN_PREFIX):
+        return short_name
     return WKN_PREFIX + short_name
 
 
 def make_interface_name(short_name):
     """ Returns a consistent interface name, based on the abbreviated one (ie
-    the last part) """
+    the last part).
+
+    Returns the original value if already prefixed.
+    """
     assert short_name, 'short_name cannot be None or empty'
+    if short_name.startswith(IFACE_PREFIX):
+        return short_name
     return IFACE_PREFIX + short_name
 
