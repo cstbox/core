@@ -98,7 +98,7 @@ class BrokerObject(dbus.service.Object):
 
     @dbus.service.method(SERVICE_INTERFACE, out_signature='b')
     def is_ready(self):
-        return self._cfg.is_ready()
+        return self.ready
 
     @dbus.service.method(SERVICE_INTERFACE, in_signature='s', out_signature='s')
     def get_coordinator(self, c_id):
