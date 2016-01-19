@@ -44,6 +44,8 @@ CSTBOX_HOSTNAME = socket.getfqdn()
 tz_UTC = pytz.UTC
 tz_PARIS = pytz.timezone('Europe/Paris')
 
+DEV_NULL = open(os.devnull)
+
 
 def str_2_bool(s):
     """ Parses a boolean value provided as a string and returns it.
@@ -425,7 +427,7 @@ class ServicesManager(object):
         pid_file = self._pidfile_of(svc_name)
         if os.path.exists(pid_file):
             pid = file(pid_file).readline().strip()
-            is_running = subprocess.call(["ps", "-p %s" % pid]) == 0
+            is_running = subprocess.call(["ps", "-p", pid], stdout=DEV_NULL) == 0
         else:
             is_running = False
 
