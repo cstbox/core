@@ -195,7 +195,7 @@ EventDataDef = namedtuple('EventDataDef', ['var_type', 'units'])
 
 
 class PolledDevice(HalDevice):  #pylint: disable=W0223
-    """ A device which works by polling and not spontaneaous notification.
+    """ A device which works by polling and not spontaneous notification.
 
     This class adds the method :py:meth:`poll` which takes care  of:
 
