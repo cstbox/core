@@ -48,8 +48,6 @@ For details, refer to the documentation of method EventManager.emitEvent,
 signal EventManager.onCSTBoxEvent and pycstbox.events module.
 """
 
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-
 import dbus
 import dbus.service
 
@@ -61,6 +59,8 @@ from collections import namedtuple
 from pycstbox import service
 from pycstbox import dbuslib
 from pycstbox.log import Loggable
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
 
 # Various names definitions
 
