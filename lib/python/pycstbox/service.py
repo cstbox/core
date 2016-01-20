@@ -25,19 +25,17 @@ care of running the main loop and catching signals to terminating it gracefully.
 Services objects are added to the container to provide the required services, each
 one being associated to a given path inside the container.
 """
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-__copyright__ = 'Copyright (c) 2012 CSTB'
-__vcs_id__ = '$Id$'
-__version__ = '1.0.0'
-
 
 import sys
 import signal
 import dbus.service
 import gobject
 
-import pycstbox.dbuslib as dbuslib
+from pycstbox import dbuslib
 from pycstbox.log import Loggable
+from pycstbox import sysutils
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
 
 # The name of the interface gathering system level methods
 SYSTEM_IFACE = dbuslib.IFACE_PREFIX + "__system__"
@@ -183,6 +181,7 @@ class ServiceContainer(Loggable):
         """
         if not self._loop:
             self.log_info('starting container (wkn=%s)', self._wkn.get_name())
+            sysutils.emit_service_state_event(self._name, sysutils.SVC_STARTING)
 
             started = []
             for svc_obj in self._objects:
@@ -192,7 +191,7 @@ class ServiceContainer(Loggable):
                     started.append(svc_obj)
                 except Exception as e: #pylint: disable=W0703
                     self.log_critical('svcobj %s start failure (%s)' % (svc_obj, e))
-                    for so in [o for o in started if hasattr(o,'stop') and callable(getattr(o, 'stop'))]:
+                    for so in [o for o in started if hasattr(o, 'stop') and callable(getattr(o, 'stop'))]:
                         so.stop()
                     self.log_critical('container start process aborted')
                     sys.exit(1)
@@ -202,6 +201,7 @@ class ServiceContainer(Loggable):
             self._loop = gobject.MainLoop()
             signal.signal(signal.SIGTERM, self.__sigterm_handler)
             try:
+                sysutils.emit_service_state_event(self._name, sysutils.SVC_RUNNING)
                 self._loop.run()
 
             except KeyboardInterrupt:
@@ -210,10 +210,12 @@ class ServiceContainer(Loggable):
                 self.terminate()
 
             except Exception as e:
+                sysutils.emit_service_state_event(self._name, sysutils.SVC_ABORTING)
                 self.log_exception(e)
-                sys.exit(1)
+                raise sysutils.CSTBoxError(e)
 
             self.log_info('terminated')
+            sysutils.emit_service_state_event(self._name, sysutils.SVC_STOPPED)
 
         else:
             self.log_warn("ignored : already running")
@@ -226,6 +228,8 @@ class ServiceContainer(Loggable):
         Stopping a not running container has no effect, apart a warning message in the log.
         """
         if self._loop:
+            sysutils.emit_service_state_event(self._name, sysutils.SVC_STOPPING)
+
             for so in [o for o in self._objects if hasattr(o,'stop') and callable(getattr(o, 'stop'))]:
                 so.stop()
 

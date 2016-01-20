@@ -32,6 +32,7 @@ import pycstbox.log as log
 __author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
 
 _logger = log.getLogger('sysutils')
+_logger.setLevel(log.INFO)
 
 ISO_DATE_FORMAT = "%Y-%m-%d"
 
@@ -673,3 +674,44 @@ def get_module_versions():
             date = datetime.datetime.fromtimestamp(os.path.getmtime(version_file_path)).strftime("%Y-%m-%d %H:%M:%S")
         versions[f] = ModuleVersion(version, date)
     return versions
+
+
+_evtmgr = None
+
+SVC_UNKNOWN, SVC_STOPPED, SVC_STARTING, SVC_RUNNING, SVC_STOPPING, SVC_ABORTING = range(6)
+SVC_EVENT_VAR_TYPE = 'svcevt'
+SVC_STATE_NAMES = {
+    SVC_UNKNOWN: "unknown",
+    SVC_STOPPED: "stopped",
+    SVC_STARTING: "starting",
+    SVC_RUNNING: "running",
+    SVC_STOPPING: "stopping",
+    SVC_ABORTING: "aborting"
+}
+
+
+class CSTBoxError(Exception):
+    """ Root class of CSTBox specialized exceptions """
+
+
+def emit_service_state_event(svc_name, state):
+    _logger.debug("emit_service_state_event(%s, %s)", svc_name, state)
+
+    from pycstbox import evtmgr
+
+    # don't try to emit events for the event manager (egg and chicken problem)
+    if svc_name == evtmgr.SERVICE_NAME:
+        return
+
+    if state not in SVC_STATE_NAMES:
+        raise ValueError('invalid service state (%s)' % state)
+
+    global _evtmgr
+    if not _evtmgr:
+        _evtmgr = evtmgr.get_object(evtmgr.FRAMEWORK_EVENT_CHANNEL)
+
+    if not _evtmgr:
+        _logger.error('service state event not emitted : unable to get event manager service')
+        return False
+
+    _evtmgr.emitEvent(SVC_EVENT_VAR_TYPE, svc_name, json.dumps({'state': state, "state_str": SVC_STATE_NAMES[state]}))
