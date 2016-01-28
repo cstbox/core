@@ -431,7 +431,20 @@ class _PollingThread(threading.Thread, Loggable):
             :param PollTask _task: the task to be executed
             """
             schedule = Schedule(_when, _task)
-            sched_queue.append(schedule)
+
+            if sched_queue:
+                # find the right insert position of the schedule to maintain
+                # the queue chronologically sorted, optimizing the trivial cases
+                if sched_queue[-1].when <= _when:
+                    sched_queue.append(schedule)
+                else:
+                    for i, sched in enumerate(sched_queue):
+                        if sched.when > _when:
+                            sched_queue.insert(i, schedule)
+                            break
+            else:
+                sched_queue.append(schedule)
+
             self.log_debug('schedule added : when=%s dev=%s', schedule.when, schedule.task.dev.id_)
 
         # For all the devices to be polled at starting time, we add them
@@ -459,88 +472,91 @@ class _PollingThread(threading.Thread, Loggable):
         empty_stats = (0, 0, 0, 0, 0, False)
         while not self._terminate:
             polling_start_time = time.time()
-            for task in [task for (when, task) in sched_queue if when <= polling_start_time]:
-                # check terminate flag as frequently a possible, since some devices can take a
-                # while to be polled, and we can have a lot of polls to be done here
-                if self._terminate:
-                    break
+            if sched_queue:
+                # for task in [task for (when, task) in sched_queue if when <= polling_start_time]:
 
-                dev, period = task
-                dev_id = dev.id_
+                # process all tasks which schedule is passed or now
+                while sched_queue[0].when <= polling_start_time:
+                    # check terminate flag as frequently a possible, since some devices can take a
+                    # while to be polled, and we can have a lot of polls to be done here
+                    if self._terminate:
+                        break
 
-                # logs the polling operation in an optimized way, so that not
-                # to fill up the log with recurrent messages
-                if dev_id not in polled_devs:
-                    self.log_info('first polling of device %s', dev_id)
-                    polled_devs.append(dev_id)
-                else:
-                    self.log_debug('polling device %s', dev_id)
+                    # remove the task from the list and process it
+                    task = sched_queue.pop(0)
 
-                total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error = dev_stats.get(dev_id, empty_stats)
-                try:
-                    # requests the device driver to execute the polling procedure
-                    # and return us the list of events corresponding to the reply
-                    # received in return
-                    total_poll += 1
-                    events = dev.haldev.poll()
+                    dev, period = task
+                    dev_id = dev.id_
 
-                except CommunicationError as e:
-                    comm_errs += 1
-                    err_level += 1
-                    report_error(e.message, err_level)
-                    in_error = True
+                    # logs the polling operation in an optimized way, so that not
+                    # to fill up the log with recurrent messages
+                    if dev_id not in polled_devs:
+                        self.log_info('first polling of device %s', dev_id)
+                        polled_devs.append(dev_id)
+                    else:
+                        self.log_debug('polling device %s', dev_id)
 
-                except ValueError as e:
-                    crc_errs += 1
-                    err_level += 1
-                    report_error('CRC error on device %s' % dev_id, err_level)
-                    in_error = True
-
-                except TypeError as e:
-                    unexp_errs += 1
-                    err_level += 1
-                    report_error('unexpected error on device %s (%s)' % (dev_id, e.message), err_level)
-                    in_error = True
-
-                else:
-                    if in_error:
-                        self.log_info(
-                            'communication restored with device %s', dev_id
-                        )
-                        in_error = False
-                        err_level = 0
-
+                    total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error = dev_stats.get(dev_id, empty_stats)
                     try:
-                        for evt in events:
-                            if self._terminate:
-                                break
-                            self.log_debug('emitting ' + str(evt))
-                            self._owner.emit_event(
-                                evt.var_type, evt.var_name, json.dumps(evt.data)
+                        # requests the device driver to execute the polling procedure
+                        # and return us the list of events corresponding to the reply
+                        # received in return
+                        total_poll += 1
+                        events = dev.haldev.poll()
+
+                    except CommunicationError as e:
+                        comm_errs += 1
+                        err_level += 1
+                        report_error(e.message, err_level)
+                        in_error = True
+
+                    except ValueError as e:
+                        crc_errs += 1
+                        err_level += 1
+                        report_error('CRC error on device %s' % dev_id, err_level)
+                        in_error = True
+
+                    except TypeError as e:
+                        unexp_errs += 1
+                        err_level += 1
+                        report_error('unexpected error on device %s (%s)' % (dev_id, e.message), err_level)
+                        in_error = True
+
+                    else:
+                        if in_error:
+                            self.log_info(
+                                'communication restored with device %s', dev_id
                             )
-                    except DBusException as e:
-                        if not self._terminate:
-                            self.log_exception(e)
+                            in_error = False
+                            err_level = 0
 
-                dev_stats[dev_id] = (total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error)
-                if total_poll % self.STATS_INTERVAL == 0:
-                    self.log_info(
-                            '%s traffic stats: total_polls=%d comm_errs=%d crc_errs=%d unexp_errs=%d in_error=%s',
-                            dev_id, total_poll, comm_errs, crc_errs, unexp_errs, in_error
-                    )
+                        try:
+                            for evt in events:
+                                if self._terminate:
+                                    break
+                                self.log_debug('emitting ' + str(evt))
+                                self._owner.emit_event(
+                                    evt.var_type, evt.var_name, json.dumps(evt.data)
+                                )
+                        except DBusException as e:
+                            if not self._terminate:
+                                self.log_exception(e)
 
-                # re-schedule this task
-                next_time = polling_start_time + period
-                # TODO to be reworked
-                # Works but is a bit incorrect. We are deleting the first list item, although the processed
-                # task can be elsewhere (see the if filter in the loop iterator)
-                del sched_queue[0]
-                at(next_time, task)
+                    dev_stats[dev_id] = (total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error)
+                    if total_poll % self.STATS_INTERVAL == 0:
+                        self.log_info(
+                                '%s traffic stats: total_polls=%d comm_errs=%d crc_errs=%d unexp_errs=%d in_error=%s',
+                                dev_id, total_poll, comm_errs, crc_errs, unexp_errs, in_error
+                        )
 
-                # if the we need to calm down successive low level requests, wait a bit before polling next guy
-                if poll_req_interval:
-                    self.log_debug('pausing %.1fs before polling next device...', poll_req_interval)
-                    time.sleep(poll_req_interval)
+                    # re-schedule this task
+                    next_time = polling_start_time + period
+                    at(next_time, task)
+
+                    # if the we need to calm down successive low level requests, wait a bit before polling next guy
+                    if poll_req_interval:
+                        self.log_debug('pausing %.1fs before polling next device...', poll_req_interval)
+                        time.sleep(poll_req_interval)
 
             # wait until next checking, if we have not been requested to
             # terminate meanwhile
