@@ -483,7 +483,7 @@ class _PollingThread(threading.Thread, Loggable):
                         break
 
                     # remove the task from the list and process it
-                    task = sched_queue.pop(0)
+                    when, task = sched_queue.pop(0)
 
                     dev, period = task
                     dev_id = dev.id_
