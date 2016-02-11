@@ -597,7 +597,13 @@ def symbol_for_name(fqdn):
     :raises ImportError: if the package name could not be imported
     :raises NameError: if no symbol with the given name is not defined in the package
     """
+    if not fqdn:
+        raise ValueError('empty value passed to symbol_for_name')
+
     module_name, _, symbol_name = fqdn.rpartition('.')
+    if not module_name or not symbol_name:
+        raise ValueError("fqdn is not fully qualified (%s)" % fqdn)
+
     import importlib
     try:
         module = importlib.import_module(module_name)
