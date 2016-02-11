@@ -43,6 +43,8 @@ init() {
     # build the installed services list, tagged with their respective 
     # sequence number and store it in a temp file for use by the rest
     # of the script
+
+    # a bit of cleanup before in case some garbage left here
     rm -f $TMP_SVC_LIST
 
     # depending on --applayer option being used or not, either take all init
@@ -62,7 +64,9 @@ init() {
         svc=$(basename $script)
         flds=(${stmt//=/ })
         init_seq=${flds[1]}
-        echo $init_seq $svc >> $TMP_SVC_LIST
+
+        grep -q -e '^\s*CAN_FAIL=yes' $script && can_fail=1 || can_fail=0
+        echo $init_seq $svc $can_fail >> $TMP_SVC_LIST
     done  
 }
 
@@ -89,14 +93,14 @@ do_start() {
 
     # Sort the services list by increasing sequence number, and
     # start each service in turn.
-    # Stop at once in case of error (TODO: should be do some kind of rollback ?)
-    sort $TMP_SVC_LIST | while read init_seq svc ; do
+    # Stop at once in case of error and if "can fail" option not set
+    sort $TMP_SVC_LIST | while read init_seq svc can_fail ; do
         $SYSLOG "starting $svc"
         service $svc start
         rc=$?
         if [ $rc -ne 0 ] ; then
             $SYSLOG "$svc start failed with rc=$rc"
-            return $rc
+            if [ "$can_fail" == "0" ] ; then return $rc ; fi
         fi
         $SYSLOG "$svc started"
     done
