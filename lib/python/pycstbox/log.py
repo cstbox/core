@@ -23,12 +23,9 @@ used as a drop-in replacement of ``logging`` module, since all toplevel function
 here.
 """
 
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-__copyright__ = 'Copyright (c) 2013 CSTB'
-__vcs_id__ = '$Id$'
-__version__ = '1.0.0'
-
 import logging
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
 
 # create aliases for logging root functions so that logging import is not
 # needed for module users
