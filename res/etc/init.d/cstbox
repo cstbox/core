@@ -114,7 +114,7 @@ do_stop() {
     # Sort the services list by decreasing sequence number, and
     # stop each service in turn. Go until the end even if some 
     # step fails.
-    sort -r $TMP_SVC_LIST | while read init_seq svc ; do
+    sort -r $TMP_SVC_LIST | while read init_seq svc can_fail ; do
         service $svc stop
         $SYSLOG "$svc stopped"
     done
