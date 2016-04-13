@@ -61,11 +61,13 @@ class ConfigurationBroker(service.ServiceContainer):
         Parameters:
             see service.ServiceObject.__init__()
         """
+        super(ConfigurationBroker, self).__init__(SERVICE_NAME, conn)
 
-        so = BrokerObject()
-        super(ConfigurationBroker, self).__init__(SERVICE_NAME, conn, [(so, OBJECT_PATH)])
-
-        so.set_logger(self._logger)
+        # we cannot add the service objects at instantiation time since we need
+        # us to be fully initialized before for being able to pass them our logger
+        self.add_objects([
+            (BrokerObject(self._logger), OBJECT_PATH)
+        ])
 
 
 def get_object():
