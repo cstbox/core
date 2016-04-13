@@ -26,6 +26,7 @@ import datetime
 import pytz
 import socket
 import json
+import time
 
 import pycstbox.log as log
 
@@ -533,8 +534,17 @@ class ServicesManager(object):
 
     @staticmethod
     def cstbox_restart():
-        """ Restarts all CSTBox services, including the core ones."""
-        ServicesManager._issue_command("%s restart" % os.path.join(ServicesManager.INIT_SCRIPTS_DIR, 'cstbox'))
+        """ Restarts all CSTBox services, including the core ones.
+
+        We don't use the restart sub-command, since it seems to create race conditions
+        on really slow CPUs.
+        """
+        init_script_path = os.path.join(ServicesManager.INIT_SCRIPTS_DIR, 'cstbox')
+        ServicesManager._issue_command("%s stop" % init_script_path)
+        # let is go down quietly
+        time.sleep(5)
+        # bring it back up
+        ServicesManager._issue_command("%s start" % init_script_path)
 
     @staticmethod
     def system_reboot():
