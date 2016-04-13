@@ -392,7 +392,7 @@ Schedule = namedtuple('Schedule', ['when', 'task'])
 class _PollingThread(threading.Thread, Loggable):
     """ Thread managing devices polling."""
     DFLT_TASK_CHECKING_PERIOD = 1
-    STATS_INTERVAL = 100
+    STATS_INTERVAL = 1000
 
     def __init__(self, owner, tasks):
         """
