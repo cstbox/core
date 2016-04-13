@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # This file is part of CSTBox.
@@ -88,6 +87,7 @@ class VarTypes(object):
     FLOW_DETECTION = 'flow'
     FLOOD_DETECTION = 'flood'
     BADGE_DETECTION = 'badge'
+    SMOKE_DETECTION = 'smoke'
     DETECTION = 'detection'
     USAGE = 'usage'
 
@@ -101,6 +101,13 @@ class VarTypes(object):
     ENERGY = 'energy'
     POWER_REACTIVE = 'power.react'
     ENERGY_REACTIVE = 'energy.react'
+    PRESSURE = 'pressure'
+    SPEED = 'speed'
+    MOISTURE = 'moisture'
+    CONCENTRATION = 'concentration'
+    ILLUMINANCE = 'illuminance'
+    IRRADIANCE = 'irradiance'
+    DIRECTION = 'direction'
 
     ALARM_MODE = 'alarm_mode'
     ACK = 'ack'
