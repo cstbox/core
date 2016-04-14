@@ -266,10 +266,12 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
                     haldev = class_(self._cfg, cfg_dev)
                 except HalError as e:
                     self.log_error(e)
+                    raise
                 except Exception as e:  #pylint: disable=W0703
                     self.log_exception(
                         "unexpected error while creating hw device instance: %s", e
                     )
+                    raise
                 else:
                     hw_dev = haldev._hwdev
                     if isinstance(hw_dev, Loggable):
