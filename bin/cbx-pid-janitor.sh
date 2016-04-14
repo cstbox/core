@@ -18,7 +18,7 @@
 PID_FILES_DIR=/var/run/cstbox
 
 pidfiles=$(ls $PID_FILES_DIR/cstbox-*.pid 2> /dev/null)
-for pifdile in $pifdiles; do
+for pidfile in $pidfiles; do
     read pid < $pidfile
     ps $pid > /dev/null || rm $pidfile
 done
