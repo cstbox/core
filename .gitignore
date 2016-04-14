@@ -16,3 +16,4 @@ deprecated/
 RELEASE-VERSION
 
 DEBIAN/control
+fabfile-settings.py
