@@ -118,9 +118,13 @@ class DeviceNetworkSvc(ServiceContainer):
             self.log_info('creating coordinator id=%s class=%s', cid, coord_class)
             so = coord_class(cid)
             so.log_setLevel(self.log_getEffectiveLevel())
-            so.load_configuration(cfg_coord)
-            self.add(so, '/' + cid)
-            cnt += 1
+            try:
+                so.load_configuration(cfg_coord)
+            except HalError as e:
+                self.log_error(e)
+            else:
+                self.add(so, '/' + cid)
+                cnt += 1
 
         if not cnt:
             self.log_warn("no matching coordinator found in configuration data")
