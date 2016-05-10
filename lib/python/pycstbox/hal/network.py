@@ -149,6 +149,8 @@ DFLT_POLL_PERIOD = 1    # secs
 DFLT_POLL_REQ_INTERVAL = 0
 DEFAULT_EVENTS_MAX_AGE = 2 * 3600   # 2 hours
 
+CFG_IDENT = '__id__'    # the configuration dictionary key for the device identification
+
 
 class CoordinatorServiceObject(dbus.service.Object, Loggable):
     """ DBus service object responsible for managing a given sub-network
@@ -265,6 +267,9 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
             if devtype in devclasses:
                 class_ = devclasses[devtype]
                 self.log_info('- driver class : %s' % class_)
+
+                # copy the device id in the configuration dictionary in case the device would need it
+                cfg_dev[CFG_IDENT] = id_
 
                 try:
                     haldev = class_(self._cfg, cfg_dev)
