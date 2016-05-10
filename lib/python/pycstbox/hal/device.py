@@ -50,8 +50,8 @@ class HalDevice(object):    #pylint: disable=R0922
     """
     def __init__(self, coord, cfg):
         """
-        :param Coordinator coord: the parent coordinator
-        :param dict cfg: the device configuration, as retrieved from the global configuration data
+        :param devcfg.Coordinator coord: the parent coordinator configuration object
+        :param devcfg.Device cfg: the device configuration object, as retrieved from the global configuration data
         """
         self.coord = coord
         self._cfg = cfg
