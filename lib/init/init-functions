@@ -26,15 +26,21 @@
 # DAEMON_ARGS="<optional daemon arguments>"
 # INIT_VERBOSE=yes
 #
+# CSTBOX_xxx environment variables are set in /etc/cstbox/setenv. They can be customized if needed
+# by creating a /etc/cstbox/setenv.local file with the required overrides or additions.
+#
 # Author: Eric Pascual <eric.pascual@cstb.fr>
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
-VARRUN=/var/run/cstbox
-VARLOG=/var/log/cstbox
+# setup global definitions, such as PYTHONPATH and all the CSTBOX_xxx variables
+. /etc/cstbox/setenv
+if [ -f /etc/cstbox/setenv.local ] ; then
+    . /etc/cstbox/setenv.local
+fi
 
-PIDFILE=$VARRUN/$NAME.pid
-LOGFILE=$VARLOG/$NAME.log 
+PIDFILE=$CSTBOX_VAR_RUN/$NAME.pid
+LOGFILE=$CSTBOX_LOG_DIR/$NAME.log
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the daemon is not configured
@@ -51,9 +57,6 @@ if [ ! -x "$DAEMON" ] ; then
 	echo "[FATAL] Cannot start $NAME : file is not executable ($DAEMON)" >> $LOGFILE
 	exit 3
 fi
-
-# setup global definitions, such as PYTHONPATH
-. /etc/cstbox/setenv
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
