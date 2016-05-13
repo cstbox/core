@@ -83,7 +83,7 @@ do_start()
 		echo -n " already started"
 		RETVAL=1
 	else
-		. $VARRUN/cstbox-dbus
+		. $CSTBOX_VAR_RUN/cstbox-dbus
 		echo "" >> $LOGFILE
 		echo "-------- Starting service $NAME at $(date)" >> $LOGFILE
 		# check start dependencies if any
