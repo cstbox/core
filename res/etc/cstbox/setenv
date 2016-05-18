@@ -6,3 +6,7 @@ export CSTBOX_APPDATA="$CSTBOX_VAR_RUN/appdata"
 export CSTBOX_LIB_DPKG="$CSTBOX_HOME/lib/dpkg"
 
 export PYTHONPATH="$CSTBOX_HOME/lib/python:$CSTBOX_HOME/deps/python"
+
+# allow specific application level customisation
+SETENV_LOCAL=/etc/cstbox/setenv.local
+[ -e $SETENV_SETENV_LOCAL ] && . $SETENV_SETENV_LOCAL
