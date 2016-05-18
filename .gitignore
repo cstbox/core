@@ -17,3 +17,4 @@ RELEASE-VERSION
 
 DEBIAN/control
 fabfile-settings.py
+fabfile.*
