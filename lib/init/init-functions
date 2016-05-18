@@ -29,9 +29,20 @@
 # CSTBOX_xxx environment variables are set in /etc/cstbox/setenv. They can be customized if needed
 # by creating a /etc/cstbox/setenv.local file with the required overrides or additions.
 #
+# DBus related remark:
+# -------------------
+# Since almost all components of the CSTBox use DBus to communicate with other ones,
+# the USES_DBUS flag is set to 1 by default, which triggers related actions, such as loading
+# the DBus related environment variables.
+# If your component does not need them, or has chances to be started before the DBus context
+# is initialized, add the USES_DBUS=0 environment variable setting with the ones described above.
+#
 # Author: Eric Pascual <eric.pascual@cstb.fr>
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+# almost all CSTBox components use DBus, so the flag is set by default
+USES_DBUS?=1
 
 # setup global definitions, such as PYTHONPATH and all the CSTBOX_xxx variables
 . /etc/cstbox/setenv
@@ -83,19 +94,25 @@ do_start()
 		echo -n " already started"
 		RETVAL=1
 	else
-		. $CSTBOX_VAR_RUN/cstbox-dbus
+	    # load the DBus environment variables if the component uses DBus
+	    if [ $USES_DBUS -eq 1 ] ; then
+    		. $CSTBOX_VAR_RUN/cstbox-dbus
+        fi
+
 		echo "" >> $LOGFILE
 		echo "-------- Starting service $NAME at $(date)" >> $LOGFILE
+
 		# check start dependencies if any
 		if [ -n "$DEPENDS" ] ; then
 			pgrep $DEPENDS 2>&1 > /dev/null
 			if [ $? -ne 0 ] ; then
-			   echo "starting not runnning dependency : $DEPENDS"
+			   echo "starting not running dependency : $DEPENDS"
 			   service $DEPENDS start
 			   sleep 1
 			fi
 		fi
 
+        # start the daemon now
 		$DAEMON $DAEMON_ARGS >> $LOGFILE 2>&1 &
 		pid=$!
 		RETVAL="$?"
