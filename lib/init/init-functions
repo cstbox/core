@@ -42,7 +42,7 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 # almost all CSTBox components use DBus, so the flag is set by default
-USES_DBUS?=1
+${USES_DBUS:=1}
 
 # setup global definitions, such as PYTHONPATH and all the CSTBOX_xxx variables
 . /etc/cstbox/setenv
