@@ -3,7 +3,7 @@ stop_service() {
     [ -n "$svc" ] || return
 
     if [ -f $CSTBOX_VAR_RUN/$svc.pid ] ; then
-        service $svc stop
+        service $svc stop || true
     fi
 }
 
