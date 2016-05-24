@@ -104,7 +104,6 @@ class ServiceContainer(Loggable):
         self._wkn = dbus.service.BusName(dbuslib.make_bus_name(name), self._conn)
 
         self._loop = None
-        self._terminating = False
         self._terminate_lock = threading.Lock()
 
         Loggable.__init__(self, logname='SC:%s' % self._name)
@@ -186,8 +185,6 @@ class ServiceContainer(Loggable):
             self.log_info('starting container (wkn=%s)', self._wkn.get_name())
             sysutils.emit_service_state_event(self._name, sysutils.SVC_STARTING)
 
-            self._terminating = False
-
             started = []
             for svc_obj in self._objects:
                 try:
@@ -234,16 +231,13 @@ class ServiceContainer(Loggable):
         """
         if self._loop:
             with self._terminate_lock:
-                if not self._terminating:
-                    self._terminating = True
-                    sysutils.emit_service_state_event(self._name, sysutils.SVC_STOPPING)
+                sysutils.emit_service_state_event(self._name, sysutils.SVC_STOPPING)
 
-                    for so in [o for o in self._objects if hasattr(o, 'stop') and callable(getattr(o, 'stop'))]:
-                        so.stop()
+                for so in [o for o in self._objects if hasattr(o, 'stop') and callable(getattr(o, 'stop'))]:
+                    so.stop()
 
-                    self._loop.quit()
-                    self._loop = None
-                    self._terminating = False
+                self._loop.quit()
+                self._loop = None
 
         else:
             self.log_warn("ignored : not currently running")
@@ -251,8 +245,7 @@ class ServiceContainer(Loggable):
     def __sigterm_handler(self, signum, frame):     #pylint: disable=W0613
         """ Catches SIGTERM signals to gracefully stop the container if running. """
         self.log_info('SIGTERM received')
-        if self._loop:
-            self.terminate()
+        self.terminate()
 
 
 class _FrameworkServiceObject(dbus.service.Object):
