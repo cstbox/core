@@ -30,6 +30,7 @@ import sys
 import signal
 import dbus.service
 import gobject
+import threading
 
 from pycstbox import dbuslib
 from pycstbox.log import Loggable
@@ -103,6 +104,8 @@ class ServiceContainer(Loggable):
         self._wkn = dbus.service.BusName(dbuslib.make_bus_name(name), self._conn)
 
         self._loop = None
+        self._terminating = False
+        self._terminate_lock = threading.Lock()
 
         Loggable.__init__(self, logname='SC:%s' % self._name)
 
@@ -183,6 +186,8 @@ class ServiceContainer(Loggable):
             self.log_info('starting container (wkn=%s)', self._wkn.get_name())
             sysutils.emit_service_state_event(self._name, sysutils.SVC_STARTING)
 
+            self._terminating = False
+
             started = []
             for svc_obj in self._objects:
                 try:
@@ -228,13 +233,17 @@ class ServiceContainer(Loggable):
         Stopping a not running container has no effect, apart a warning message in the log.
         """
         if self._loop:
-            sysutils.emit_service_state_event(self._name, sysutils.SVC_STOPPING)
+            with self._terminate_lock:
+                if not self._terminating:
+                    self._terminating = True
+                    sysutils.emit_service_state_event(self._name, sysutils.SVC_STOPPING)
 
-            for so in [o for o in self._objects if hasattr(o,'stop') and callable(getattr(o, 'stop'))]:
-                so.stop()
+                    for so in [o for o in self._objects if hasattr(o, 'stop') and callable(getattr(o, 'stop'))]:
+                        so.stop()
 
-            self._loop.quit()
-            self._loop = None
+                    self._loop.quit()
+                    self._loop = None
+                    self._terminating = False
 
         else:
             self.log_warn("ignored : not currently running")
