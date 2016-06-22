@@ -40,8 +40,11 @@ ISO_DATE_FORMAT = "%Y-%m-%d"
 CSTBOX_HOME = os.environ.get('CSTBOX_HOME', '/opt/cstbox')
 CSTBOX_BIN_DIR = os.path.join(CSTBOX_HOME, 'bin')
 CSTBOX_LIB_DIR = os.path.join(CSTBOX_HOME, 'lib/python')
+CSTBOX_DEPS_DIR = os.path.join(CSTBOX_HOME, 'deps/python')
 CSTBOX_VERSION_DIR = os.path.join(CSTBOX_HOME, 'version')
 CSTBOX_HOSTNAME = socket.getfqdn()
+CSTBOX_LOG_DIR = os.environ.get('CSTBOX_LOG_DIR', '/var/log/cstbox')
+CSTBOX_PYTHONPATH_ENV = 'PYTHONPATH=' + ':'.join([CSTBOX_LIB_DIR, CSTBOX_DEPS_DIR])
 
 tz_UTC = pytz.UTC
 tz_PARIS = pytz.timezone('Europe/Paris')
