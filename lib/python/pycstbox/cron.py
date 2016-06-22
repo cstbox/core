@@ -25,11 +25,13 @@ loosing their definitions, and then be able to reactivate them back again when
 restarting the framework.
 """
 
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-
 import re
 import os
 import pwd
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
+
+from pycstbox import sysutils
 
 # A symlink to this file is created as /etc/cron.d/cstbox so that the
 # task definitions are persistent.
@@ -39,8 +41,8 @@ CRONTAB_HEADER = """# /etc/cron.d/cstbox: crontab entries for the CSTBox package
 
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-PYTHONPATH=/opt/cstbox/lib/python:/opt/cstbox/deps/python
-"""
+%s
+""" % sysutils.CSTBOX_PYTHONPATH_ENV
 
 # try to import custom extensions
 try:
