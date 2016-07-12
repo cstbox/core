@@ -20,12 +20,12 @@
 features.
 """
 
-__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
-
 import argparse
 import os
 
 import pycstbox.config
+
+__author__ = 'Eric PASCUAL - CSTB (eric.pascual@cstb.fr)'
 
 
 def _uppercase_string(s):
@@ -65,7 +65,7 @@ def get_argument_parser(description, **kwargs):
     return parser
 
 
-def add_config_file_option_to_parser(parser, dflt_name):
+def add_config_file_option_to_parser(parser, dflt_name, must_exist=True):
     """ Adds the command-line option to the parser for providing the path of
     the configuration file
 
@@ -76,13 +76,20 @@ def add_config_file_option_to_parser(parser, dflt_name):
             The parser to which the option will be added. Cannot be None
     :param str dflt_name:
             the default name of the file. Cannot be None or empty
+    :param bool must_exist:
+            if True, file existence is checked
     """
     assert parser, 'parser cannot be None'
     assert dflt_name, 'dflt_name cannot be None or empty'
+
+    def maybe_valid_path(s):
+        if must_exist and not os.path.isfile(s):
+            raise argparse.ArgumentTypeError('path not found')
+        return s
 
     dflt = os.path.join(pycstbox.config.CONFIG_DIR, dflt_name)
     parser.add_argument('-c', '--config',
                         dest='config_path',
                         default=dflt,
-                        help='path of the configuration file'
-    )
+                        type=maybe_valid_path,
+                        help='path of the configuration file')
