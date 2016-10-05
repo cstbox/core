@@ -49,6 +49,8 @@ CSTBOX_PYTHONPATH_ENV = 'PYTHONPATH=' + ':'.join([CSTBOX_LIB_DIR, CSTBOX_DEPS_DI
 tz_UTC = pytz.UTC
 tz_PARIS = pytz.timezone('Europe/Paris')
 
+EPOCH = datetime.datetime.utcfromtimestamp(0)
+
 DEV_NULL = open(os.devnull)
 
 
@@ -210,10 +212,10 @@ def to_milliseconds(ts):
     :rtype: long
     """
     if isinstance(ts, datetime.datetime):
-        delta = ts - datetime.datetime.utcfromtimestamp(0)
+        delta = ts - EPOCH
         ts = long(delta.total_seconds() * 1000)
     elif isinstance(ts, datetime.date):
-        delta = datetime.datetime(ts.year, ts.month, ts.day) - datetime.datetime.utcfromtimestamp(0)
+        delta = datetime.datetime(ts.year, ts.month, ts.day) - EPOCH
         ts = long(delta.total_seconds() * 1000)
     return ts
 
