@@ -20,3 +20,4 @@ fabfile-settings.py
 fabfile.*
 dist/
 build/
+*.egg-info
