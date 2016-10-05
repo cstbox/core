@@ -15,5 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with CSTBox.  If not, see <http://www.gnu.org/licenses/>.
 
-from pkgutil import extend_path
-__path__ = extend_path(__path__, __name__)
+# from pkgutil import extend_path
+# __path__ = extend_path(__path__, __name__)
+__import__('pkg_resources').declare_namespace(__name__)
