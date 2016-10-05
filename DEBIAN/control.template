@@ -3,7 +3,7 @@ Version: %(version)s
 Section: embedded
 Priority: optional
 Architecture: all
-Depends: python (>=2.7), python (<<3), python-dbus, python-gobject, python-gobject-2, dbus-x11, avahi-utils, cstbox-deps
+Depends: python (>=2.7), python (<<3), python-dbus, python-gobject, python-gobject-2, python-pkg-resources, dbus-x11, avahi-utils, cstbox-deps
 Suggests: openntpd,cstbox-ext-webui,cstbox-ext-webservices
 Maintainer: Eric Pascual <eric.pascual@cstb.fr>
 Description: CSTBox runtime core part
