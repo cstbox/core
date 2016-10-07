@@ -83,6 +83,8 @@ def add_config_file_option_to_parser(parser, dflt_name, must_exist=True):
     assert dflt_name, 'dflt_name cannot be None or empty'
 
     def maybe_valid_path(s):
+        if not os.path.isabs(s):
+            s = os.path.join(pycstbox.config.CONFIG_DIR, s)
         if must_exist and not os.path.isfile(s):
             raise argparse.ArgumentTypeError('path not found')
         return s
