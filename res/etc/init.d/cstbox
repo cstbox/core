@@ -35,6 +35,7 @@ TMP_DUMMY="/tmp/dummy"
 APPLAYER_OPT=$2
 LOG_DIR_PATH="/var/log/cstbox"
 SYSLOG="logger -t cstbox"
+WAIT_FOR_NTPSYNC=0
 
 . /lib/lsb/init-functions
 . /etc/cstbox/setenv
@@ -90,6 +91,23 @@ do_start() {
 
     # Same for log files dedicated directory
     [ -d $LOG_DIR_PATH ] || mkdir -p $LOG_DIR_PATH
+
+    # if we need NTP sync, wait for we are synced with a server
+    if [ $WAIT_FOR_NTPSYNC -ne 0 ] ; then
+        $SYSLOG "waiting for NTP sync"
+        while true ; do
+            reply=$(ntpq -p | grep -e "^\*")
+            if [ -n "$reply" ] ; then
+                tokens=( $reply )
+                host=${tokens[0]:1}
+                ip=${tokens[1]}
+                $SYSLOG "... time synced with $host ($ip). Now is $(date)"
+                break
+            fi
+            $SYSLOG "... waiting..."
+            sleep 10
+        done
+    fi
 
     # Sort the services list by increasing sequence number, and
     # start each service in turn.
