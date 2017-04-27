@@ -452,7 +452,7 @@ class Metadata(object):
         """
         path = Metadata._device_path(fqdt)
         if not os.path.exists(path):
-            raise DeviceTypeNotFound(fqdt)
+            raise DeviceTypeNotFound("%s (%s)" % (fqdt, path))
         with open(path, 'r') as f:
             try:
                 return json.load(f)
