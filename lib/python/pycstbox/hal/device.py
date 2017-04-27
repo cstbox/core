@@ -48,13 +48,13 @@ class HalDevice(object):    #pylint: disable=R0922
     Polled devices are modeled by the :py:class:`PolledDevice` class, which provides the
     foundation for managing the dialog with the physical equipment in order to get its outputs.
     """
-    def __init__(self, coord, cfg):
+    def __init__(self, coord_cfg, dev_cfg):
         """
-        :param devcfg.Coordinator coord: the parent coordinator configuration object
-        :param devcfg.Device cfg: the device configuration object, as retrieved from the global configuration data
+        :param devcfg.Coordinator coord_cfg: the parent coordinator configuration object
+        :param devcfg.Device dev_cfg: the device configuration object, as retrieved from the global configuration data
         """
-        self.coord = coord
-        self._cfg = cfg
+        self.coord = coord_cfg
+        self._cfg = dev_cfg
         self._prev_values = {}
         self._last_event_times = {}
 
@@ -219,9 +219,9 @@ class PolledDevice(HalDevice):  #pylint: disable=W0223
         (and will be no more polled) if not compliant.
     """
 
-    def __init__(self, coord, cfg):
+    def __init__(self, coord_cfg, dev_cfg):
         """ Refer to :py:class:`pycstbox.hal.device.HalDevice` for parameters definition."""
-        super(PolledDevice, self).__init__(coord, cfg)
+        super(PolledDevice, self).__init__(coord_cfg, dev_cfg)
         self._hwdev = None
         self._is_checked = self._is_valid = False
 
