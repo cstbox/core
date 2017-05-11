@@ -719,6 +719,7 @@ def emit_service_state_event(svc_name, state):
     _logger.debug("emit_service_state_event(%s, %s)", svc_name, state)
 
     from pycstbox import evtmgr
+    from dbus import DBusException
 
     # don't try to emit events for the event manager (egg and chicken problem)
     if svc_name == evtmgr.SERVICE_NAME:
@@ -735,4 +736,10 @@ def emit_service_state_event(svc_name, state):
         _logger.error('service state event not emitted : unable to get event manager service')
         return False
 
-    _evtmgr.emitEvent(SVC_EVENT_VAR_TYPE, svc_name, json.dumps({'state': state, "state_str": SVC_STATE_NAMES[state]}))
+    try:
+        _evtmgr.emitEvent(SVC_EVENT_VAR_TYPE, svc_name, json.dumps({'state': state, "state_str": SVC_STATE_NAMES[state]}))
+    except DBusException as e:
+        # log the error but don't choke on it, since it can happen during the shutdown sequence due to some
+        # race condition with the involved peers (f.i. the private bus daemon is already stopped when we try
+        # to emit our stop notification)
+        _logger.error("unexpected DBus error while sending the service state event %s", SVC_STATE_NAMES[state])
