@@ -51,7 +51,10 @@ _global_registry = {}
 
 def get_hal_device_classes():
     if not _global_registry:
-        _logger.info("registering HAL device classes :")
+        hline = '-' * 60
+        _logger.info(hline)
+        _logger.info("HAL device classes discovery")
+        _logger.info(hline)
         for modname in [
             n for _, n, ispkg in pkgutil.iter_modules([os.path.dirname(__file__)])
             if not ispkg and not 'test_' in n and not '_test' in n
@@ -68,5 +71,7 @@ def get_hal_device_classes():
                 _logger.error("registration error : (%s) %s", e.__class__.__name__, e.message)
             else:
                 del m
+
+        _logger.info(hline)
 
     return _global_registry
