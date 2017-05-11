@@ -37,7 +37,6 @@ import threading
 import time
 from collections import namedtuple
 import json
-import math
 
 import dbus.service
 from dbus.exceptions import DBusException
