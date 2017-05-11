@@ -182,7 +182,8 @@ class ServiceContainer(Loggable):
         Starting a running container has no effect, apart a warning message in the log.
         """
         if not self._loop:
-            self.log_info('starting container (wkn=%s)', self._wkn.get_name())
+            self.log_info('+++ starting container (wkn=%s)', self._wkn.get_name())
+
             sysutils.emit_service_state_event(self._name, sysutils.SVC_STARTING)
 
             started = []
@@ -198,7 +199,7 @@ class ServiceContainer(Loggable):
                     self.log_critical('container start process aborted')
                     sys.exit(1)
                 else:
-                    self.log_info('svcobj %s started' % svc_obj)
+                    self.log_info('... svcobj %s started' % svc_obj)
 
             self._loop = gobject.MainLoop()
             signal.signal(signal.SIGTERM, self.__sigterm_handler)
@@ -253,6 +254,9 @@ class _FrameworkServiceObject(dbus.service.Object):
     def __init__(self, owner):
         super(_FrameworkServiceObject, self).__init__()
         self._owner = owner
+
+    def __str__(self):
+        return 'SO:framework'
 
     @dbus.service.method(SYSTEM_IFACE)
     def terminate(self):
