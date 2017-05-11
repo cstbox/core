@@ -104,8 +104,9 @@ class Loggable(object):
         return self._logger
 
     def log_setLevel(self, level):
-        self._logger.setLevel(level)
-        self.log_info('log level changed to %s' % logging.getLevelName(level))
+        if level != self._logger.getEffectiveLevel():
+            self._logger.setLevel(level)
+            self.log_info('log level changed to %s' % logging.getLevelName(level))
 
     def log_setLevel_from_args(self, args):
         """ Sets the logger level based on the attribute "loglevel" of the args
