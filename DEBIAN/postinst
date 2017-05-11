@@ -13,11 +13,41 @@ UDEV_RULES_TARGET="/etc/udev/rules.d/70-persistent-usb.rules"
 UDEV_RULES_LIB="$CSTBOX_HOME/lib/udev-rules.d"
 UDEV_RULES_EMPTY="$UDEV_RULES_LIB/empty.rules"
 
-DMIDECODE=$(whereis -b dmidecode | cut -d: -f2 | tr -d ' ')
+hw=$(grep -q Hardware /proc/cpuinfo)
+if [ -n "$hw" ] ; then
+    tokens=($hw)
+    cpumodel=${tokens[2]}
 
-if [ -n "$DMIDECODE" ]; then
-    SYSTEM_MANUFACTURER=$($DMIDECODE -s system-manufacturer)
-    SYSTEM_PRODUCT_NAME=$($DMIDECODE -s system-product-name | tr ' ' '_')
+    case "$cpumodel" in
+    BCM2835)
+        SYSTEM_MANUFACTURER="Raspberry"
+        SYSTEM_PRODUCT_NAME="3B"
+        ;;
+    BCM2836)
+        SYSTEM_MANUFACTURER="Raspberry"
+        SYSTEM_PRODUCT_NAME="2B"
+        ;;
+    BCM2835)
+        SYSTEM_MANUFACTURER="Raspberry"
+        SYSTEM_PRODUCT_NAME="1B"
+        ;;
+    esac
+
+else
+    DMIDECODE=$(whereis -b dmidecode | cut -d: -f2 | tr -d ' ')
+    if [ -n "$DMIDECODE" ]; then
+        SYSTEM_MANUFACTURER=$($DMIDECODE -s system-manufacturer)
+        SYSTEM_PRODUCT_NAME=$($DMIDECODE -s system-product-name | tr ' ' '_')
+    else
+        echo "*** dmidecode not installed ***"
+    fi
+fi
+
+if [ -z "$SYSTEM_MANUFACTURER" ] ; then
+    echo " => cannot identify which kind of machine is used for the box"
+    echo " => you'll have to complete $UDEV_RULES_TARGET by hand"
+    cp $UDEV_RULES_EMPTY $UDEV_RULES_TARGET
+else
     echo "  looking for Manufacturer=$SYSTEM_MANUFACTURER and Product=$SYSTEM_PRODUCT_NAME in rules database..."
 
     UDEV_RULES_SRC=$(echo "$UDEV_RULES_LIB/$SYSTEM_MANUFACTURER-$SYSTEM_PRODUCT_NAME.rules" | tr ' ' '_')
@@ -29,12 +59,6 @@ if [ -n "$DMIDECODE" ]; then
         echo "  *** no match"
         echo " => you'll have to complete $UDEV_RULES_TARGET by hand"
     fi
-
-else
-    echo "*** dmidecode not installed ***"
-    echo " => cannot identify which kind of machine is used for the box"
-    echo " => you'll have to complete $UDEV_RULES_TARGET by hand"
-    cp $UDEV_RULES_EMPTY $UDEV_RULES_TARGET
 fi
 
 # Add CSTBox meta service to the init process
