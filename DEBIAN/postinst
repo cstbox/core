@@ -13,7 +13,7 @@ UDEV_RULES_TARGET="/etc/udev/rules.d/70-persistent-usb.rules"
 UDEV_RULES_LIB="$CSTBOX_HOME/lib/udev-rules.d"
 UDEV_RULES_EMPTY="$UDEV_RULES_LIB/empty.rules"
 
-hw=$(grep -q Hardware /proc/cpuinfo)
+hw=$(grep Hardware /proc/cpuinfo)
 if [ -n "$hw" ] ; then
     tokens=($hw)
     cpumodel=${tokens[2]}
