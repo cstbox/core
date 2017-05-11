@@ -742,4 +742,9 @@ def emit_service_state_event(svc_name, state):
         # log the error but don't choke on it, since it can happen during the shutdown sequence due to some
         # race condition with the involved peers (f.i. the private bus daemon is already stopped when we try
         # to emit our stop notification)
-        _logger.error("unexpected DBus error while sending the service state event %s", SVC_STATE_NAMES[state])
+        _logger.error(
+            'unexpected DBus error %s while sending the service state event "%s"',
+            e, SVC_STATE_NAMES[state]
+        )
+        if state == SVC_STOPPED:
+            _logger.error('(can be safely ignored if during the global shutdown sequence)')
