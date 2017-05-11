@@ -114,7 +114,7 @@ class DeviceNetworkSvc(ServiceContainer):
             if cfg_coord.type in self._coord_types
         ]:
             coord_class = self._coord_types[cfg_coord.type]
-            self.log_info('creating coordinator id=%s class=%s', cid, coord_class)
+            self.log_info('creating coordinator id=%s class=%s', cid, coord_class.__name__)
             so = coord_class(cid)
             so.log_setLevel(self.log_getEffectiveLevel())
             try:
@@ -177,6 +177,7 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         self._polling_thread = None
         self._poll_req_interval = None
         self._devices = {}
+        self._error_count = 0
 
         Loggable.__init__(self, logname='%s' % str(self))
 
@@ -213,11 +214,19 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         if not cfg:
             raise ValueError('configuration cannot be None or empty')
 
-        self.log_info("loading configuration...")
+        hline = '-' * 60
+        self.log_info(hline)
+        self.log_info("Devices configuration loading")
+        self.log_info(hline)
         self._cfg = cfg
         self._configure_coordinator(self._cfg)
         self._devices = self._configure_devices(self._cfg)
-        self.log_info("done")
+        self.log_info(hline)
+        if self._error_count == 0:
+            self.log_info("devices configuration successfully loaded")
+        else:
+            self.log_error('devices configuration loaded with %d error(s)', self._error_count)
+        self.log_info(hline)
 
     @property
     def cfg(self):
@@ -263,27 +272,28 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
             self.log_info('- device type : %s' % devtype)
             if devtype in devclasses:
                 class_ = devclasses[devtype]
-                self.log_info('- driver class : %s' % class_)
+                self.log_info('- driver class : %s' % class_.__name__)
 
                 try:
+                    self.log_info('[%s] creating HW device instance', id_)
                     haldev = class_(self._cfg, cfg_dev)
-                except HalError as e:
-                    self.log_error(e)
-                    raise
-                except Exception as e:  #pylint: disable=W0703
-                    self.log_exception(
-                        "unexpected error while creating hw device instance: %s", e
-                    )
-                    raise
+                except Exception as e:
+                    if isinstance(e, HalError):
+                        self.log_error("[%s] %s", id_, e)
+                    else:
+                        self.log_exception("[%s] unexpected error : %s", id_, e)
+                    self.log_error('[%s] device ignored', id_)
+                    self._error_count += 1
                 else:
                     hw_dev = haldev._hwdev
                     if isinstance(hw_dev, Loggable):
                         hw_dev.log_setLevel(self.log_getEffectiveLevel())
                     hw_dev.poll_req_interval = self._poll_req_interval
                     devices[id_] = DeviceListEntry(id_, cfg_dev, haldev)
+                    self.log_info('[%s] device registered', id_)
 
             else:
-                self.log_error("no driver found for device type '%s'", devtype)
+                self.log_error("[%s] no driver found for device type '%s'", id_, devtype)
         return devices
 
     def send_command(self, command, callback=None):
@@ -304,9 +314,12 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
 
         Called automatically by the framework when the service is started.
         """
-        self.log_info('connecting to Event Manager...')
-        self._evtmgr = pycstbox.evtmgr.get_object(pycstbox.evtmgr.SENSOR_EVENT_CHANNEL)
-        self.log_info('success')
+        try:
+            self._evtmgr = pycstbox.evtmgr.get_object(pycstbox.evtmgr.SENSOR_EVENT_CHANNEL)
+        except DBusException as e:
+            raise DeviceNetworkError("cannot connect to Event Manager : %s" % e)
+        else:
+            self.log_info('connected to Event Manager')
 
         # Build the polling scheduling list.
         # List items are tuples composed of :
