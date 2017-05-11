@@ -59,7 +59,7 @@ def hal_device(device_type, coordinator_type):
         _global_registry[device_type] = cls
 
         _logger.info(
-            "class %s registered as implementation of device type %s:%s",
+            "  + class %s registered as implementation of device type %s:%s",
             cls.__name__, coordinator_type, device_type
         )
 
