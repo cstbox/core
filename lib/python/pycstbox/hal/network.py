@@ -571,7 +571,7 @@ class _PollingThread(threading.Thread, Loggable):
                     next_time = polling_start_time + period
                     at(next_time, task)
 
-                    # if the we need to calm down successive low level requests, wait a bit before polling next guy
+                    # if we need to calm down successive low level requests, wait a bit before polling next guy
                     if poll_req_interval:
                         self.log_debug('pausing %.1fs before polling next device...', poll_req_interval)
                         time.sleep(poll_req_interval)
