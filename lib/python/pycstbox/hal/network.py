@@ -570,12 +570,14 @@ class _PollingThread(threading.Thread, Loggable):
                     # In case of error, and if it is the first one, give it a second chance for this task
                     # by re-enqueing it with the same scheduling time.
                     # Re-schedule it after the normal period otherwise (no error or not the first one)
-                    if in_error and err_level == 1:
-                        next_time = polling_start_time
-                        self.log_warn("... second chance given")
-                    else:
-                        next_time = polling_start_time + period
+                    if in_error:
+                        if err_level == 1:
+                            self.log_warn("... second chance given")
+                            period = 0
+                        else:
+                            self.log_error("... sorry for this time")
 
+                    next_time = polling_start_time + period
                     at(next_time, task)
 
                     # if we need to calm down successive low level requests, wait a bit before polling next guy
