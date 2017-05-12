@@ -144,8 +144,8 @@ PollTask = namedtuple('PollTask', ['dev', 'period'])
 :key period: the polling period (in seconds)
 """
 
-DFLT_POLL_PERIOD = 1    # secs
-DFLT_POLL_REQ_INTERVAL = 0
+DFLT_POLL_PERIOD = 1                # secs
+DFLT_POLL_REQ_INTERVAL = 0          # secs
 DEFAULT_EVENTS_MAX_AGE = 2 * 3600   # 2 hours
 
 
@@ -243,7 +243,7 @@ class CoordinatorServiceObject(dbus.service.Object, Loggable):
         :param dict cfg: coordinator's configuration data (included attached devices list)
         """
         # retrieve the delay between successive polls, if configured
-        self._poll_req_interval = parse_period(
+        self._poll_req_interval = float(
                 getattr(cfg, ConfigurationParms.POLL_REQUESTS_INTERVAL, DFLT_POLL_REQ_INTERVAL)
         )
         if self._poll_req_interval:
