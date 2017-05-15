@@ -500,14 +500,6 @@ class _PollingThread(threading.Thread, Loggable):
         # reached their schedule are executed, then moved to the end of the
         # scheduling queue
 
-        def report_error(_msg, _err_level):
-            if _err_level == 1:
-                self.log_error(_msg)
-            elif _err_level == 2:
-                self.log_error('(repeated) %s', _msg)
-            elif _err_level == 3:
-                self.log_error('(last report) %s', _msg)
-
         self.log_info('entering run loop')
         self._terminate = False
 
@@ -519,6 +511,9 @@ class _PollingThread(threading.Thread, Loggable):
             dev_stats = {}
         else:
             dev_stats = {k: PollingStats.from_dict(v) for k, v in d.iteritems()}
+            self.log_info('previously recorded stats:')
+            for dev_id, stats in dev_stats.iteritems():
+                self.log_info('- [%s] %s', dev_id, stats)
 
         # accumulator for device errors (keyed by device id) used for reporting
         errors = {}
