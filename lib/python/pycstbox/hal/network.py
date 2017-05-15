@@ -407,10 +407,34 @@ Schedule = namedtuple('Schedule', ['when', 'task'])
 """
 
 
+class PollingStats(object):
+    __slots__ = ['total_poll', 'comm_errs', 'crc_errs', 'unexp_errs', 'recovered']
+
+    def __init__(self, total_poll=0, comm_errs=0, crc_errs=0, unexp_errs=0, recovered=0):
+        self.total_poll, self.comm_errs, self.crc_errs, self.unexp_errs, self.recovered = \
+            total_poll, comm_errs, crc_errs, unexp_errs, recovered
+
+    def __str__(self):
+        return "total_polls=%d, comm_errs=%d, crc_errs=%d, unexp_errs=%d, recovered=%d" % (
+            self.total_poll, self.comm_errs, self.crc_errs, self.unexp_errs, self.recovered
+        )
+
+    def as_dict(self):
+        return {k: getattr(self, k) for k in self.__slots__}
+
+    @classmethod
+    def from_dict(cls, d):
+        inst = PollingStats()
+        for k in inst.__slots__:
+            setattr(inst, k, d[k])
+        return inst
+
+
 class _PollingThread(threading.Thread, Loggable):
     """ Thread managing devices polling."""
     DFLT_TASK_CHECKING_PERIOD = 1
     STATS_INTERVAL = 1000
+    STATS_STORAGE_PATH = '/var/db/cstbox/polling_stats-%s.dat'
 
     def __init__(self, owner, tasks):
         """
@@ -423,6 +447,7 @@ class _PollingThread(threading.Thread, Loggable):
         self._tasks = tasks
         self._terminate = False
         self._task_trigger_checking_period = self.DFLT_TASK_CHECKING_PERIOD
+        self._stats_file_path = self.STATS_STORAGE_PATH % self._owner.coordinator_id
 
         Loggable.__init__(self, logname='Poll:%s' % self._owner.coordinator_id)
 
@@ -485,22 +510,29 @@ class _PollingThread(threading.Thread, Loggable):
 
         self.log_info('entering run loop')
         self._terminate = False
-        dev_stats = {}
+
+        # try to load previously saved stats if any.
+        try:
+            with open(self._stats_file_path) as fp:
+                d = json.load(fp)
+        except (IOError, ValueError):
+            dev_stats = {}
+        else:
+            dev_stats = {k: PollingStats.from_dict(v) for k, v in d.iteritems()}
+
+        # accumulator for device errors (keyed by device id) used for reporting
+        errors = {}
+
         polled_devs = []
-        empty_stats = (0, 0, 0, 0, 0, False)
         while not self._terminate:
             polling_start_time = time.time()
             if sched_queue:
-                # for task in [task for (when, task) in sched_queue if when <= polling_start_time]:
+                retried = []
 
-                # process all tasks which schedule is passed or now
-                while sched_queue[0].when <= polling_start_time:
-                    # check terminate flag as frequently a possible, since some devices can take a
-                    # while to be polled, and we can have a lot of polls to be done here
-                    if self._terminate:
-                        break
-
-                    # remove the task from the list and process it
+                # process all the tasks which schedule is now or older, checking the termination
+                # request while doing this
+                while not self._terminate and sched_queue[0].when <= polling_start_time:
+                    # dequeue the task and process it
                     when, task = sched_queue.pop(0)
 
                     dev, period = task
@@ -509,44 +541,37 @@ class _PollingThread(threading.Thread, Loggable):
                     # logs the polling operation in an optimized way, so that not
                     # to fill up the log with recurrent messages
                     if dev_id not in polled_devs:
-                        self.log_info('first polling of device %s', dev_id)
+                        self.log_info('[%s] first polling', dev_id)
                         polled_devs.append(dev_id)
                     else:
-                        self.log_debug('polling device %s', dev_id)
+                        self.log_debug('[%s] polling device', dev_id)
 
-                    total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error = dev_stats.get(dev_id, empty_stats)
+                    # stats, err_level, in_error = dev_stats.get(dev_id, (PollingStats(), 0, False))
+                    stats = dev_stats.get(dev_id, PollingStats())
                     try:
                         # requests the device driver to execute the polling procedure
                         # and return us the list of events corresponding to the reply
                         # received in return
-                        total_poll += 1
+                        stats.total_poll += 1
                         events = dev.haldev.poll()
 
                     except CommunicationError as e:
-                        comm_errs += 1
-                        err_level += 1
-                        report_error(e.message, err_level)
-                        in_error = True
+                        stats.comm_errs += 1
+                        errors[dev_id] = e.message
 
-                    except ValueError as e:
-                        crc_errs += 1
-                        err_level += 1
-                        report_error('CRC error on device %s' % dev_id, err_level)
-                        in_error = True
+                    except ValueError:
+                        stats.crc_errs += 1
+                        errors[dev_id] = 'CRC error'
 
                     except TypeError as e:
-                        unexp_errs += 1
-                        err_level += 1
-                        report_error('unexpected error on device %s (%s)' % (dev_id, e.message), err_level)
-                        in_error = True
+                        stats.unexp_errs += 1
+                        errors[dev_id] = e.message
 
                     else:
-                        if in_error:
-                            self.log_info(
-                                'communication restored with device %s', dev_id
-                            )
-                            in_error = False
-                            err_level = 0
+                        if dev_id in errors:
+                            self.log_info('[%s] recovered from %s', dev_id, errors[dev_id])
+                            del errors[dev_id]
+                            stats.recovered += 1
 
                         try:
                             for evt in events:
@@ -560,22 +585,25 @@ class _PollingThread(threading.Thread, Loggable):
                             if not self._terminate:
                                 self.log_exception(e)
 
-                    dev_stats[dev_id] = (total_poll, comm_errs, crc_errs, unexp_errs, err_level, in_error)
-                    if total_poll % self.STATS_INTERVAL == 0:
-                        self.log_info(
-                                '%s traffic stats: total_polls=%d comm_errs=%d crc_errs=%d unexp_errs=%d in_error=%s',
-                                dev_id, total_poll, comm_errs, crc_errs, unexp_errs, in_error
-                        )
+                    dev_stats[dev_id] = stats
+                    error = errors.get(dev_id, None)
+                    if stats.total_poll % self.STATS_INTERVAL == 0:
+                        self.log_info('[%s] %s error=%s', dev_id, stats, error)
+                        # save stats on disk
+                        with open(self._stats_file_path, 'w') as fp:
+                            d = {k: v.as_dict() for k, v in dev_stats.iteritems()}
+                            json.dump(d, fp, indent=4)
 
-                    # In case of error, and if it is the first one, give it a second chance for this task
+                    # In case of error, and if it is the first one, let's give it a second chance for this task
                     # by re-enqueing it with the same scheduling time.
                     # Re-schedule it after the normal period otherwise (no error or not the first one)
-                    if in_error:
-                        if err_level == 1:
-                            self.log_warn("... second chance given")
+                    if error:
+                        if dev_id not in retried:
+                            self.log_debug("... second chance given")
+                            retried.append(dev_id)
                             period = 0
                         else:
-                            self.log_error("... sorry for this time")
+                            self.log_error("[%s] non recovered error : %s", dev_id, error)
 
                     next_time = polling_start_time + period
                     at(next_time, task)
@@ -586,7 +614,7 @@ class _PollingThread(threading.Thread, Loggable):
                         time.sleep(poll_req_interval)
 
             # wait until next checking, if we have not been requested to
-            # terminate meanwhile
+            # terminate in the meantime
             if self._terminate:
                 break
 
