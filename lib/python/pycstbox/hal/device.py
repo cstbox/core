@@ -281,9 +281,9 @@ class PollingError(Exception):
         super(PollingError, self).__init__(self._get_message())
 
     def _get_message(self):
-        return 'polling error on device %s : %s' % (self.dev_id, self.error.message)
+        return 'polling error (%s)' % self.error.message
 
 
 class CommunicationError(PollingError):
     def _get_message(self):
-        return 'communication error with device %s' % self.dev_id
+        return 'communication error'
